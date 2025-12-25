@@ -1,6 +1,6 @@
-transformers
 torch
+transformers
 accelerate
-numpy
+bitsandbytes
 sentencepiece
 protobuf
