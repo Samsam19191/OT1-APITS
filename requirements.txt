@@ -4,3 +4,9 @@ accelerate
 bitsandbytes
 sentencepiece
 protobuf
+
+# WebSocket server
+fastapi
+uvicorn[standard]
+websockets
+pydantic
