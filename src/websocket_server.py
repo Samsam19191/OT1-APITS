@@ -131,6 +131,7 @@ async def websocket_session(websocket: WebSocket):
                 elif msg_type == "text_update":
                     text = message.get("text", "")
                     submit = message.get("submit", False)
+                    logger.info(f"text_update: text='{text}', submit={submit}")
 
                     if submit:
                         async for result in controller.on_text_submit(text):
