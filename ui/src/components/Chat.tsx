@@ -5,6 +5,14 @@ import './Chat.css';
 
 const DEFAULT_BASE_PROMPT = 'You are a SQL assistant. Convert natural language to SQL.';
 
+function SendIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+    </svg>
+  );
+}
+
 export function Chat() {
   const {
     status,
@@ -20,41 +28,35 @@ export function Chat() {
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
-  const [showDebug, setShowDebug] = useState(true);
+  const [showDebug, setShowDebug] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const prevInputRef = useRef('');
 
-  // Connect on mount
   useEffect(() => {
     connect();
   }, [connect]);
 
-  // Start session when connected
   useEffect(() => {
     if (status === 'connected') {
       startSession(DEFAULT_BASE_PROMPT);
     }
   }, [status, startSession]);
 
-  // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, generatedText]);
 
-  // Handle input change - send keystrokes
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
     const prevValue = prevInputRef.current;
 
     if (newValue.length > prevValue.length) {
-      // Character added
       const newChars = newValue.slice(prevValue.length);
       for (const char of newChars) {
         sendKeystroke(char);
       }
     } else if (newValue.length < prevValue.length) {
-      // Characters deleted
       const deletedCount = prevValue.length - newValue.length;
       for (let i = 0; i < deletedCount; i++) {
         sendDelete();
@@ -65,7 +67,6 @@ export function Chat() {
     setInputValue(newValue);
   };
 
-  // Handle submit
   const handleSubmit = () => {
     if (!inputValue.trim() || sessionState.isGenerating) return;
 
@@ -82,7 +83,6 @@ export function Chat() {
     prevInputRef.current = '';
   };
 
-  // Handle Enter key
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -90,7 +90,6 @@ export function Chat() {
     }
   };
 
-  // Add assistant message when generation completes
   useEffect(() => {
     if (!sessionState.isGenerating && generatedText && messages.length > 0) {
       const lastMessage = messages[messages.length - 1];
@@ -103,7 +102,7 @@ export function Chat() {
           metrics: metrics ?? undefined,
         };
         setMessages((prev) => [...prev, assistantMessage]);
-        startSession(DEFAULT_BASE_PROMPT); // Reset for next query
+        startSession(DEFAULT_BASE_PROMPT);
       }
     }
   }, [sessionState.isGenerating, generatedText, messages, metrics, startSession]);
@@ -111,14 +110,11 @@ export function Chat() {
   return (
     <div className="chat-container">
       <header className="chat-header">
-        <h1>Text-to-SQL</h1>
+        <h1>Anticipatory Prefill with Keystroke Streaming</h1>
         <div className="header-controls">
-          <span className={`status-badge ${status}`}>{status}</span>
-          <button
-            className="debug-toggle"
-            onClick={() => setShowDebug(!showDebug)}
-          >
-            {showDebug ? 'Hide Debug' : 'Show Debug'}
+          <span className={`status-badge ${status}`} title={status} />
+          <button className="debug-toggle" onClick={() => setShowDebug(!showDebug)}>
+            {showDebug ? 'Hide Debug' : 'Debug'}
           </button>
         </div>
       </header>
@@ -143,7 +139,7 @@ export function Chat() {
               </div>
               {msg.metrics && (
                 <div className="message-metrics">
-                  TTFT: {msg.metrics.ttft_ms?.toFixed(0)}ms | Total: {msg.metrics.total_time_ms?.toFixed(0)}ms
+                  TTFT: {msg.metrics.ttft_ms?.toFixed(0)}ms · Total: {msg.metrics.total_time_ms?.toFixed(0)}ms
                 </div>
               )}
             </div>
@@ -152,7 +148,7 @@ export function Chat() {
           {sessionState.isGenerating && (
             <div className="message assistant generating">
               <div className="message-content">
-                <pre><code>{generatedText || 'Generating...'}</code></pre>
+                <pre><code>{generatedText || '...'}</code></pre>
               </div>
             </div>
           )}
@@ -164,29 +160,29 @@ export function Chat() {
           <aside className="debug-panel">
             <h3>Debug</h3>
             <div className="debug-item">
-              <label>Keystrokes:</label>
+              <label>Keystrokes</label>
               <span>{sessionState.keystrokeCount}</span>
             </div>
             <div className="debug-item">
-              <label>Current text:</label>
-              <span className="mono">{sessionState.currentText || '(empty)'}</span>
+              <label>Current</label>
+              <span className="mono">{sessionState.currentText || '—'}</span>
             </div>
             <div className="debug-item">
-              <label>Confirmed:</label>
-              <span className="mono confirmed">{sessionState.confirmedText || '(none)'}</span>
+              <label>Confirmed</label>
+              <span className="mono confirmed">{sessionState.confirmedText || '—'}</span>
             </div>
             <div className="debug-item">
-              <label>Pending:</label>
-              <span className="mono pending">{sessionState.pendingText || '(none)'}</span>
+              <label>Pending</label>
+              <span className="mono pending">{sessionState.pendingText || '—'}</span>
             </div>
             {metrics && (
               <>
                 <div className="debug-item">
-                  <label>TTFT:</label>
+                  <label>TTFT</label>
                   <span>{metrics.ttft_ms.toFixed(0)}ms</span>
                 </div>
                 <div className="debug-item">
-                  <label>Total time:</label>
+                  <label>Total</label>
                   <span>{metrics.total_time_ms.toFixed(0)}ms</span>
                 </div>
               </>
@@ -196,21 +192,24 @@ export function Chat() {
       </div>
 
       <footer className="chat-footer">
-        <textarea
-          ref={inputRef}
-          value={inputValue}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
-          placeholder="Describe your SQL query in natural language..."
-          disabled={status !== 'connected'}
-          rows={2}
-        />
-        <button
-          onClick={handleSubmit}
-          disabled={!inputValue.trim() || sessionState.isGenerating || status !== 'connected'}
-        >
-          {sessionState.isGenerating ? 'Generating...' : 'Send'}
-        </button>
+        <div className="input-wrapper">
+          <textarea
+            ref={inputRef}
+            value={inputValue}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            placeholder="Describe your SQL query..."
+            disabled={status !== 'connected'}
+            rows={1}
+          />
+          <button
+            onClick={handleSubmit}
+            disabled={!inputValue.trim() || sessionState.isGenerating || status !== 'connected'}
+            title="Send"
+          >
+            <SendIcon />
+          </button>
+        </div>
       </footer>
     </div>
   );
