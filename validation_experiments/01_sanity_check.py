@@ -1,6 +1,12 @@
 import argparse
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import torch
 from utils import load_model_and_tokenizer, print_kv_stats
+from src.prompts import SYSTEM_PROMPT, USER_PROMPT, SCHEMA_PROMPT
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -9,7 +15,16 @@ def main():
 
     model, tokenizer, device = load_model_and_tokenizer(args.model_id)
 
-    prompt = "Hello, this is a test of the KV cache system."
+    user_prompt = USER_PROMPT.format(question="Donne moi tous les utilisateurs ayant plus de 30 ans.")
+    schema = SCHEMA_PROMPT.format(schema="""
+Table users:
+- id: integer, primary key
+- name: text
+- age: integer
+- email: text
+""")
+    
+    prompt = SYSTEM_PROMPT + schema + user_prompt
     inputs = tokenizer(prompt, return_tensors="pt").to(device)
 
     print(f"\nRunning forward pass on: '{prompt}'")
