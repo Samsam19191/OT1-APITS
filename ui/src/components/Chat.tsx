@@ -21,9 +21,7 @@ export function Chat() {
     metrics,
     connect,
     startSession,
-    sendKeystroke,
-    sendDelete,
-    submit,
+    sendTextUpdate,
   } = useWebSocket();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -31,7 +29,6 @@ export function Chat() {
   const [showDebug, setShowDebug] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const prevInputRef = useRef('');
 
   useEffect(() => {
     connect();
@@ -49,22 +46,8 @@ export function Chat() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
-    const prevValue = prevInputRef.current;
-
-    if (newValue.length > prevValue.length) {
-      const newChars = newValue.slice(prevValue.length);
-      for (const char of newChars) {
-        sendKeystroke(char);
-      }
-    } else if (newValue.length < prevValue.length) {
-      const deletedCount = prevValue.length - newValue.length;
-      for (let i = 0; i < deletedCount; i++) {
-        sendDelete();
-      }
-    }
-
-    prevInputRef.current = newValue;
     setInputValue(newValue);
+    sendTextUpdate(newValue, false);
   };
 
   const handleSubmit = () => {
@@ -78,9 +61,8 @@ export function Chat() {
     };
     setMessages((prev) => [...prev, userMessage]);
 
-    submit();
+    sendTextUpdate(inputValue, true);
     setInputValue('');
-    prevInputRef.current = '';
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -159,10 +141,6 @@ export function Chat() {
         {showDebug && (
           <aside className="debug-panel">
             <h3>Debug</h3>
-            <div className="debug-item">
-              <label>Keystrokes</label>
-              <span>{sessionState.keystrokeCount}</span>
-            </div>
             <div className="debug-item">
               <label>Current</label>
               <span className="mono">{sessionState.currentText || '—'}</span>
