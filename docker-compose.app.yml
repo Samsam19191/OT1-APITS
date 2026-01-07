@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  db_app:
+    image: postgres:15-alpine
+    container_name: ot1_apits_db_app
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ot1_apits
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_app_data:/var/lib/postgresql/data
+    restart: always
+
+  frontend:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+    container_name: ot1_apits_frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./ui:/app
+      - /app/node_modules
+    environment:
+      - VITE_WS_URL=ws://localhost:8000/ws/session
+    restart: always
+    depends_on:
+      - db_app
+
+volumes:
+  postgres_app_data:

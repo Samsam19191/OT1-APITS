@@ -1,0 +1,134 @@
+[
+    {
+        "db_id": "medical_records",
+        "question": "What are the names of all patients diagnosed with diabetes?",
+        "query": "SELECT name FROM patients WHERE diagnosis = 'diabetes'",
+        "schema": {
+            "patients": {
+                "columns": [
+                    "patient_id",
+                    "name",
+                    "age",
+                    "diagnosis"
+                ],
+                "primary_key": "patient_id"
+            }
+        },
+        "seed_data": {
+            "patients": [
+                {
+                    "patient_id": 1,
+                    "name": "John Doe",
+                    "age": 45,
+                    "diagnosis": "diabetes"
+                },
+                {
+                    "patient_id": 2,
+                    "name": "Jane Smith",
+                    "age": 32,
+                    "diagnosis": "hypertension"
+                },
+                {
+                    "patient_id": 3,
+                    "name": "Bob Johnson",
+                    "age": 58,
+                    "diagnosis": "diabetes"
+                },
+                {
+                    "patient_id": 4,
+                    "name": "Alice Williams",
+                    "age": 41,
+                    "diagnosis": "asthma"
+                }
+            ]
+        }
+    },
+    {
+        "db_id": "medical_records",
+        "question": "How many patients are older than 40?",
+        "query": "SELECT COUNT(*) FROM patients WHERE age > 40",
+        "schema": {
+            "patients": {
+                "columns": [
+                    "patient_id",
+                    "name",
+                    "age",
+                    "diagnosis"
+                ],
+                "primary_key": "patient_id"
+            }
+        },
+        "seed_data": {
+            "patients": [
+                {
+                    "patient_id": 1,
+                    "name": "John Doe",
+                    "age": 45,
+                    "diagnosis": "diabetes"
+                },
+                {
+                    "patient_id": 2,
+                    "name": "Jane Smith",
+                    "age": 32,
+                    "diagnosis": "hypertension"
+                },
+                {
+                    "patient_id": 3,
+                    "name": "Bob Johnson",
+                    "age": 58,
+                    "diagnosis": "diabetes"
+                },
+                {
+                    "patient_id": 4,
+                    "name": "Alice Williams",
+                    "age": 41,
+                    "diagnosis": "asthma"
+                }
+            ]
+        }
+    },
+    {
+        "db_id": "medical_records",
+        "question": "List all unique diagnoses in the database",
+        "query": "SELECT DISTINCT diagnosis FROM patients",
+        "schema": {
+            "patients": {
+                "columns": [
+                    "patient_id",
+                    "name",
+                    "age",
+                    "diagnosis"
+                ],
+                "primary_key": "patient_id"
+            }
+        },
+        "seed_data": {
+            "patients": [
+                {
+                    "patient_id": 1,
+                    "name": "John Doe",
+                    "age": 45,
+                    "diagnosis": "diabetes"
+                },
+                {
+                    "patient_id": 2,
+                    "name": "Jane Smith",
+                    "age": 32,
+                    "diagnosis": "hypertension"
+                },
+                {
+                    "patient_id": 3,
+                    "name": "Bob Johnson",
+                    "age": 58,
+                    "diagnosis": "diabetes"
+                },
+                {
+                    "patient_id": 4,
+                    "name": "Alice Williams",
+                    "age": 41,
+                    "diagnosis": "asthma"
+                }
+            ]
+        }
+    }
+]

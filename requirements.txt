@@ -5,6 +5,12 @@ bitsandbytes
 sentencepiece
 protobuf
 
+# Environment variables
+python-dotenv
+
+# Database
+psycopg2-binary
+
 # WebSocket server
 fastapi
 uvicorn[standard]
