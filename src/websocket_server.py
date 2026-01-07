@@ -12,6 +12,7 @@ Message Protocol (JSON):
 - Backend -> Frontend: {"event": "text_update|submit_start|generation_complete", ...}
 """
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -22,23 +23,57 @@ import logging
 
 from .stream_controller import (
     StreamController,
-    MockKVCacheManager,
+    KVCacheManager,
 )
+
+from .utils import load_model_and_tokenizer
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
+# =============================================================================
+# Pydantic Models for API Documentation
+# =============================================================================
 
 class ServerStatus(BaseModel):
     status: str
     active_sessions: int
     uptime_seconds: float
 
+# =============================================================================
+# Global State (Model & Tokenizer)
+# =============================================================================
+
+ml_resources = {}
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Load ML models on startup, unload on shutdown.
+    """
+    logger.info("Loading model and tokenizer... (This may take a moment)")
+    
+    # LOAD HERE - This runs before any request is accepted
+    model, tokenizer, device = load_model_and_tokenizer("Qwen/Qwen2.5-1.5B-Instruct")
+    
+    ml_resources["model"] = model
+    ml_resources["tokenizer"] = tokenizer
+    ml_resources["device"] = device
+    
+    logger.info("Model loaded successfully!")
+    
+    yield # Server is running here
+    
+    # Cleanup (if needed)
+    ml_resources.clear()
+    logger.info("ML resources released.")
 
 app = FastAPI(
     title="Keystroke Streaming API",
     description="WebSocket API for anticipatory prefill with keystroke streaming",
-    version="2.0.0",
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 app.add_middleware(
@@ -92,7 +127,17 @@ async def websocket_session(websocket: WebSocket):
     await websocket.accept()
     session_id = f"session_{int(time.time() * 1000)}"
 
-    cache_manager = MockKVCacheManager()
+    if "model" not in ml_resources:
+        logger.error("Model not loaded yet")
+        await websocket.close(code=1011) # Internal Error
+        return
+    
+    # Create controller with KV cache
+    cache_manager = KVCacheManager(
+        model=ml_resources["model"], 
+        tokenizer=ml_resources["tokenizer"], 
+        device=ml_resources["device"]
+    )
     controller = StreamController(cache_manager, debounce_ms=300.0)
 
     async def on_flush(result: dict):
@@ -128,16 +173,19 @@ async def websocket_session(websocket: WebSocket):
                         "session_id": session_id,
                         "base_prompt_length": len(base_prompt),
                     })
-
-                elif msg_type == "text_update":
-                    full_text = message.get("full_text", "")
-                    logger.info(f"text_update: full_text='{full_text}'")
-                    result = await controller.on_text_update(full_text)
-                    await websocket.send_json(result)
-
+                
+                elif msg_type == "keystroke":
+                    # Handle keystroke
+                    text = message.get("text", "")
+                    if text:
+                        print("Received keystroke...")
+                        result = await controller.on_keystroke(text)
+                        await websocket.send_json(result)
+                
                 elif msg_type == "submit":
-                    logger.info("submit")
-                    async for result in controller.on_text_submit(controller.current_text):
+                    # Handle submit - stream generation results
+                    print("Received submit...")
+                    async for result in controller.on_submit():
                         await websocket.send_json(result)
 
                 else:
