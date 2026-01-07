@@ -14,21 +14,21 @@ Message Protocol (JSON):
 - Backend -> Frontend: {"event": "keystroke|flush|generation_token", ...}
 """
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional, Dict, Any
-import asyncio
+from typing import Optional, Dict
 import json
 import time
 import logging
 
 from .stream_controller import (
     StreamController,
-    MockKVCacheManager,
-    GenerationStatus,
+    KVCacheManager,
 )
-from .events import EventType
+
+from .utils import load_model_and_tokenizer
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -39,19 +39,39 @@ logger = logging.getLogger(__name__)
 # Pydantic Models for API Documentation
 # =============================================================================
 
-class WebSocketMessage(BaseModel):
-    """Message sent from frontend to backend."""
-    type: str  # "keystroke", "delete", "submit", "start_session"
-    char: Optional[str] = None  # For keystroke events
-    base_prompt: Optional[str] = None  # For start_session
-
-
 class ServerStatus(BaseModel):
     """Server status response."""
     status: str
     active_sessions: int
     uptime_seconds: float
 
+# =============================================================================
+# Global State (Model & Tokenizer)
+# =============================================================================
+
+ml_resources = {}
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Load ML models on startup, unload on shutdown.
+    """
+    logger.info("Loading model and tokenizer... (This may take a moment)")
+    
+    # LOAD HERE - This runs before any request is accepted
+    model, tokenizer, device = load_model_and_tokenizer("Qwen/Qwen2.5-1.5B-Instruct")
+    
+    ml_resources["model"] = model
+    ml_resources["tokenizer"] = tokenizer
+    ml_resources["device"] = device
+    
+    logger.info("Model loaded successfully!")
+    
+    yield # Server is running here
+    
+    # Cleanup (if needed)
+    ml_resources.clear()
+    logger.info("ML resources released.")
 
 # =============================================================================
 # FastAPI Application
@@ -61,6 +81,7 @@ app = FastAPI(
     title="Keystroke Streaming API",
     description="WebSocket API for anticipatory prefill with keystroke streaming",
     version="1.0.0",
+    lifespan=lifespan
 )
 
 # CORS middleware for frontend access
@@ -126,9 +147,18 @@ async def websocket_session(websocket: WebSocket):
     """
     await websocket.accept()
     session_id = f"session_{int(time.time() * 1000)}"
+
+    if "model" not in ml_resources:
+        logger.error("Model not loaded yet")
+        await websocket.close(code=1011) # Internal Error
+        return
     
-    # Create controller with mock cache (Rémi will provide real implementation)
-    cache_manager = MockKVCacheManager()
+    # Create controller with KV cache
+    cache_manager = KVCacheManager(
+        model=ml_resources["model"], 
+        tokenizer=ml_resources["tokenizer"], 
+        device=ml_resources["device"]
+    )
     controller = StreamController(cache_manager, debounce_ms=300.0)
     
     # Set up flush callback to send to frontend
@@ -171,18 +201,15 @@ async def websocket_session(websocket: WebSocket):
                 
                 elif msg_type == "keystroke":
                     # Handle keystroke
-                    char = message.get("char", "")
-                    if char:
-                        result = await controller.on_keystroke(char)
+                    text = message.get("text", "")
+                    if text:
+                        print("Received keystroke...")
+                        result = await controller.on_keystroke(text)
                         await websocket.send_json(result)
-                
-                elif msg_type == "delete":
-                    # Handle backspace
-                    result = await controller.on_delete()
-                    await websocket.send_json(result)
                 
                 elif msg_type == "submit":
                     # Handle submit - stream generation results
+                    print("Received submit...")
                     async for result in controller.on_submit():
                         await websocket.send_json(result)
                 
