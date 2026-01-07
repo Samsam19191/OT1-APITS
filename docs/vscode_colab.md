@@ -16,7 +16,7 @@ You can run these notebooks directly inside VS Code while using Google Colab's f
 
 3. **Running**:
    - Run cells normally.
-   - The notebook has been updated to automatically clone the repo source code into the Colab VM if it detects it's missing, ensuring imports verify correctly.
+   - The notebook has been designed to automatically clone the repo source code into the Colab VM if it detects it's missing, ensuring imports verify correctly.
 
 ## Troubleshooting
 
