@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  db_eval:
+    image: postgres:15-alpine
+    container_name: ot1_apits_db_eval
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ot1_apits_eval
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_eval_data:/var/lib/postgresql/data
+    restart: always
+
+volumes:
+  postgres_eval_data:
