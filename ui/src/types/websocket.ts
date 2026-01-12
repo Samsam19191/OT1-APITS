@@ -7,11 +7,14 @@ export interface StartSessionMessage {
 
 export interface TextUpdateMessage {
   type: 'text_update';
-  text: string;
-  submit: boolean;
+  full_text: string;
 }
 
-export type ClientMessage = StartSessionMessage | TextUpdateMessage;
+export interface SubmitMessage {
+  type: 'submit';
+}
+
+export type ClientMessage = StartSessionMessage | TextUpdateMessage | SubmitMessage;
 
 // Server → Client events
 

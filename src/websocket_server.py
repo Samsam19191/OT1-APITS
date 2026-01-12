@@ -7,7 +7,8 @@ API Routes:
 - GET /api/status - Server status
 
 Message Protocol (JSON):
-- Frontend -> Backend: {"type": "text_update", "text": "...", "submit": false}
+- Frontend -> Backend: {"type": "text_update", "full_text": "..."}
+- Frontend -> Backend: {"type": "submit"}
 - Backend -> Frontend: {"event": "text_update|submit_start|generation_complete", ...}
 """
 
@@ -75,8 +76,8 @@ async def websocket_session(websocket: WebSocket):
 
     Frontend -> Backend:
     - {"type": "start_session", "base_prompt": "..."}
-    - {"type": "text_update", "text": "...", "submit": false}
-    - {"type": "text_update", "text": "...", "submit": true}
+    - {"type": "text_update", "full_text": "..."}
+    - {"type": "submit"}
 
     Backend -> Frontend:
     - {"event": "connected", "session_id": "..."}
@@ -129,15 +130,14 @@ async def websocket_session(websocket: WebSocket):
                     })
 
                 elif msg_type == "text_update":
-                    text = message.get("text", "")
-                    submit = message.get("submit", False)
-                    logger.info(f"text_update: text='{text}', submit={submit}")
+                    full_text = message.get("full_text", "")
+                    logger.info(f"text_update: full_text='{full_text}'")
+                    result = await controller.on_text_update(full_text)
+                    await websocket.send_json(result)
 
-                    if submit:
-                        async for result in controller.on_text_submit(text):
-                            await websocket.send_json(result)
-                    else:
-                        result = await controller.on_text_update(text)
+                elif msg_type == "submit":
+                    logger.info("submit")
+                    async for result in controller.on_text_submit(controller.current_text):
                         await websocket.send_json(result)
 
                 else:

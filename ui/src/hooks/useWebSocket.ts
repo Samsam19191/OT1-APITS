@@ -18,7 +18,8 @@ interface UseWebSocketReturn {
   connect: () => void;
   disconnect: () => void;
   startSession: (basePrompt: string) => void;
-  sendTextUpdate: (text: string, submit: boolean) => void;
+  sendTextUpdate: (text: string) => void;
+  submit: () => void;
 }
 
 export function useWebSocket(
@@ -148,11 +149,15 @@ export function useWebSocket(
   );
 
   const sendTextUpdate = useCallback(
-    (text: string, submit: boolean) => {
-      send({ type: 'text_update', text, submit });
+    (text: string) => {
+      send({ type: 'text_update', full_text: text });
     },
     [send]
   );
+
+  const submit = useCallback(() => {
+    send({ type: 'submit' });
+  }, [send]);
 
   useEffect(() => {
     return () => {
@@ -170,5 +175,6 @@ export function useWebSocket(
     disconnect,
     startSession,
     sendTextUpdate,
+    submit,
   };
 }

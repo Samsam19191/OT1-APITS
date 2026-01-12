@@ -22,6 +22,7 @@ export function Chat() {
     connect,
     startSession,
     sendTextUpdate,
+    submit,
   } = useWebSocket();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -47,7 +48,7 @@ export function Chat() {
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
     setInputValue(newValue);
-    sendTextUpdate(newValue, false);
+    sendTextUpdate(newValue);
   };
 
   const handleSubmit = () => {
@@ -61,7 +62,7 @@ export function Chat() {
     };
     setMessages((prev) => [...prev, userMessage]);
 
-    sendTextUpdate(inputValue, true);
+    submit();
     setInputValue('');
   };
 
