@@ -232,6 +232,9 @@ class KVCacheManager(ABC):
             print(f"[KV] Gen token {i}: '{token_str}'")
             
             yield token_str
+
+            await asyncio.sleep(0) # To give time for the loop to send token
+
             generated_text_accum += token_str
             input_ids = next_token_id
 

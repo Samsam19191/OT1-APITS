@@ -18,7 +18,7 @@ def load_model_and_tokenizer(model_id):
         
     dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
     if device == "cpu":
-        dtype = torch.float32 # float16 on CPU can be slow or unsupported for some ops
+        dtype = torch.float16 # float16 on CPU can be slow or unsupported for some ops
         
     print(f"Using device: {device}, dtype: {dtype}")
 
