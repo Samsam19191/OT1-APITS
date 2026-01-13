@@ -18,8 +18,7 @@ interface UseWebSocketReturn {
   connect: () => void;
   disconnect: () => void;
   startSession: (basePrompt: string) => void;
-  sendKeystroke: (char: string) => void;
-  sendDelete: () => void;
+  sendTextUpdate: (text: string) => void;
   submit: () => void;
 }
 
@@ -36,7 +35,6 @@ export function useWebSocket(
     confirmedText: '',
     pendingText: '',
     isGenerating: false,
-    keystrokeCount: 0,
   });
   const [generatedText, setGeneratedText] = useState('');
   const [metrics, setMetrics] = useState<{ ttft_ms: number; total_time_ms: number } | null>(null);
@@ -61,28 +59,12 @@ export function useWebSocket(
           setSessionId(data.session_id);
           break;
 
-        case 'keystroke':
+        case 'text_update':
           setSessionState((prev) => ({
             ...prev,
             currentText: data.current_text,
             confirmedText: data.confirmed_text,
             pendingText: data.pending_text,
-            keystrokeCount: prev.keystrokeCount + 1,
-          }));
-          break;
-
-        case 'flush':
-          setSessionState((prev) => ({
-            ...prev,
-            confirmedText: data.confirmed_text,
-          }));
-          break;
-
-        case 'delete':
-          setSessionState((prev) => ({
-            ...prev,
-            currentText: data.current_text,
-            confirmedText: data.confirmed_text,
           }));
           break;
 
@@ -158,7 +140,6 @@ export function useWebSocket(
         confirmedText: '',
         pendingText: '',
         isGenerating: false,
-        keystrokeCount: 0,
       });
       setGeneratedText('');
       setMetrics(null);
@@ -167,16 +148,12 @@ export function useWebSocket(
     [send]
   );
 
-  const sendKeystroke = useCallback(
-    (char: string) => {
-      send({ type: 'keystroke', char });
+  const sendTextUpdate = useCallback(
+    (text: string) => {
+      send({ type: 'text_update', full_text: text });
     },
     [send]
   );
-
-  const sendDelete = useCallback(() => {
-    send({ type: 'delete' });
-  }, [send]);
 
   const submit = useCallback(() => {
     send({ type: 'submit' });
@@ -197,8 +174,7 @@ export function useWebSocket(
     connect,
     disconnect,
     startSession,
-    sendKeystroke,
-    sendDelete,
+    sendTextUpdate,
     submit,
   };
 }

@@ -5,24 +5,16 @@ export interface StartSessionMessage {
   base_prompt: string;
 }
 
-export interface KeystrokeMessage {
-  type: 'keystroke';
-  char: string;
-}
-
-export interface DeleteMessage {
-  type: 'delete';
+export interface TextUpdateMessage {
+  type: 'text_update';
+  full_text: string;
 }
 
 export interface SubmitMessage {
   type: 'submit';
 }
 
-export type ClientMessage =
-  | StartSessionMessage
-  | KeystrokeMessage
-  | DeleteMessage
-  | SubmitMessage;
+export type ClientMessage = StartSessionMessage | TextUpdateMessage | SubmitMessage;
 
 // Server → Client events
 
@@ -38,25 +30,11 @@ export interface SessionStartedEvent {
   base_prompt_length: number;
 }
 
-export interface KeystrokeEvent {
-  event: 'keystroke';
+export interface TextUpdateEvent {
+  event: 'text_update';
   current_text: string;
   confirmed_text: string;
   pending_text: string;
-}
-
-export interface FlushEvent {
-  event: 'flush';
-  confirmed_text: string;
-  delta: string;
-  cache_extended: boolean;
-}
-
-export interface DeleteEvent {
-  event: 'delete';
-  current_text: string;
-  confirmed_text: string;
-  rollback: boolean;
 }
 
 export interface SubmitStartEvent {
@@ -89,9 +67,7 @@ export interface ErrorEvent {
 export type ServerEvent =
   | ConnectedEvent
   | SessionStartedEvent
-  | KeystrokeEvent
-  | FlushEvent
-  | DeleteEvent
+  | TextUpdateEvent
   | SubmitStartEvent
   | GenerationStartEvent
   | GenerationTokenEvent
@@ -118,5 +94,4 @@ export interface TypingSessionState {
   confirmedText: string;
   pendingText: string;
   isGenerating: boolean;
-  keystrokeCount: number;
 }
