@@ -11,6 +11,7 @@ const RECONNECT_DELAY_MS = 2000;
 
 interface UseWebSocketReturn {
   status: ConnectionStatus;
+  sessionStatus: ConnectionStatus;
   sessionId: string | null;
   sessionState: TypingSessionState;
   generatedText: string;
@@ -29,6 +30,7 @@ export function useWebSocket(
   const reconnectTimeoutRef = useRef<number | null>(null);
 
   const [status, setStatus] = useState<ConnectionStatus>('disconnected');
+  const [sessionStatus, setSessionStatus] = useState<ConnectionStatus>('disconnected');
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionState, setSessionState] = useState<TypingSessionState>({
     currentText: '',
@@ -48,6 +50,7 @@ export function useWebSocket(
   const handleMessage = useCallback(
     (event: MessageEvent) => {
       const data = JSON.parse(event.data) as ServerEvent;
+      console.log(data);
       onEvent?.(data);
 
       switch (data.event) {
@@ -56,6 +59,7 @@ export function useWebSocket(
           break;
 
         case 'session_started':
+          setSessionStatus('connected');
           setSessionId(data.session_id);
           break;
 
@@ -131,6 +135,7 @@ export function useWebSocket(
     wsRef.current?.close();
     wsRef.current = null;
     setStatus('disconnected');
+    setSessionStatus('disconnected');
   }, []);
 
   const startSession = useCallback(
@@ -144,6 +149,7 @@ export function useWebSocket(
       setGeneratedText('');
       setMetrics(null);
       send({ type: 'start_session', base_prompt: basePrompt });
+      setSessionStatus('connecting');
     },
     [send]
   );
@@ -167,6 +173,7 @@ export function useWebSocket(
 
   return {
     status,
+    sessionStatus,
     sessionId,
     sessionState,
     generatedText,

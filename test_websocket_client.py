@@ -34,19 +34,20 @@ async def test_websocket():
         print("\n→ Starting session...")
         await ws.send(json.dumps({
             "type": "start_session",
-            "base_prompt": "You are a SQL assistant."
         }))
         response = await ws.recv()
         print(f"← {response}")
         
         # Simulate typing "Show patients"
-        test_query = "Show patients"
+        test_query = "Show users"
         print(f"\n→ Simulating typing: '{test_query}'")
         
+        current_text = ""
         for char in test_query:
+            current_text += char
             await ws.send(json.dumps({
                 "type": "keystroke",
-                "char": char
+                "text": current_text
             }))
             response = await ws.recv()
             data = json.loads(response)
@@ -80,13 +81,22 @@ async def test_websocket():
         # Receive generation results
         while True:
             try:
-                response = await asyncio.wait_for(ws.recv(), timeout=2.0)
+                # 1. Wait for the NEXT single message
+                response = await asyncio.wait_for(ws.recv(), timeout=10000.0)
+                
+                # 2. Process it
                 data = json.loads(response)
                 print(f"← {data}")
+                
+                # 3. Check for exit condition
                 if data.get("event") == "generation_complete":
                     break
+                    
             except asyncio.TimeoutError:
-                print("← (timeout waiting for generation)")
+                print("← (Timeout: Model took too long to generate next token)")
+                break
+            except Exception as e:
+                print(f"← Error: {e}")
                 break
         
         print("\n✓ Test complete!")
