@@ -1,5 +1,5 @@
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, GPTQConfig
 import os
 
 CONFIRMATION_BOUNDARIES = {' ', '\n', '\t', '.', ',', ';', ':', '!', '?', '(', ')', '"', "'"}
@@ -31,7 +31,8 @@ def load_model_and_tokenizer(model_id):
             # Simple approach: let accelerate handle it if CUDA, else manual.
             # actually for simple scripts, explicit .to(device) is safer than device_map="auto" which might split across CPU/GPU unexpectedly if limited vram.
             # But let's try standard loading first.
-            trust_remote_code=True
+            trust_remote_code=True,
+            # quantization_config=GPTQConfig(bits=4, use_exllama=False)
         )
         if device == "mps":
             model = model.to(device)

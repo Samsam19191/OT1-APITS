@@ -16,3 +16,6 @@ fastapi
 uvicorn[standard]
 websockets
 pydantic
+
+optimum
+accelerate

@@ -16,6 +16,7 @@ function SendIcon() {
 export function Chat() {
   const {
     status,
+    sessionStatus,
     sessionState,
     generatedText,
     metrics,
@@ -178,7 +179,7 @@ export function Chat() {
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             placeholder="Describe your SQL query..."
-            disabled={status !== 'connected'}
+            disabled={sessionStatus !== 'connected'}
             rows={1}
           />
           <button

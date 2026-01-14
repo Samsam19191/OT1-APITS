@@ -55,7 +55,7 @@ async def lifespan(app: FastAPI):
     logger.info("Loading model and tokenizer... (This may take a moment)")
     
     # LOAD HERE - This runs before any request is accepted
-    model, tokenizer, device = load_model_and_tokenizer("Qwen/Qwen2.5-1.5B-Instruct")
+    model, tokenizer, device = load_model_and_tokenizer("Qwen/Qwen2.5-Coder-1.5B-Instruct")
     
     ml_resources["model"] = model
     ml_resources["tokenizer"] = tokenizer
@@ -72,42 +72,11 @@ async def lifespan(app: FastAPI):
 BASE_PROMPT = """
 You are an expert SQL Assistant and Data Architect. Your goal is to generate accurate, syntactically correct, and efficient SQL queries based on the user's natural language question and the provided database schema.
 
-### INSTRUCTIONS:
-
-1.  **Context & Role**:
-    * Act as a senior data analyst.
-    * Do not explain the query. Output only the SQL query code block.
-    * Use the dialect: **PostgreSQL**.
-
-2.  **Schema Adherence**:
-    * Use ONLY the tables and columns provided in the schema. Do not hallucinate columns or tables.
-    * Pay attention to primary keys and foreign keys for JOIN conditions.
-    * If a requested column is ambiguous, default to the most logical choice.
-
-3.  **SQL Style & Constraints**:
-    * Use standard capitalization: Keywords in UPPERCASE (SELECT, FROM, WHERE), identifiers in lowercase or snake_case matching the schema.
-    * Always use table aliases (e.g., `u` for users, `o` for orders) for clarity.
-    * Use explicit JOIN syntax (`JOIN ... ON`).
-    * Limit results to 100 unless otherwise specified.
-    * Handle NULLs appropriately (e.g., use `IS NULL` or `COALESCE`).
-
-4.  **Reasoning Process**:
-    * Identify relevant tables.
-    * Identify necessary conditions (WHERE clause).
-    * Determine aggregation level (GROUP BY) if counting or summarizing.
-
-5.  **Safety**:
-    * **Strictly READ-ONLY**: Never generate DDL (CREATE, DROP, ALTER) or DML (INSERT, UPDATE, DELETE) statements.
-    * If the user asks for data outside the schema, respond with: "I cannot answer this question with the provided database schema."
-
 ### Schema:
 Table: users (id, name, email, signup_date)
 Table: orders (id, user_id, amount, status, created_at)
 
 ### EXAMPLE:
-Question: 
-Show me the top 5 users by total spending who signed up in 2023.
-
 ```sql
 SELECT
     u.name,
@@ -123,9 +92,12 @@ GROUP BY
 ORDER BY
     total_spent DESC
 LIMIT 5; 
+```
 
-### User Input
-Question:
+VERY IMPORTANT: You cannot add anything to the user question.
+
+### User Input:
+
 """
 
 
@@ -238,12 +210,12 @@ async def websocket_session(websocket: WebSocket):
                         "base_prompt_length": len(BASE_PROMPT),
                     })
                 
-                elif msg_type == "keystroke":
+                elif msg_type == "text_update":
                     # Handle keystroke
-                    text = message.get("text", "")
+                    text = message.get("full_text", "")
                     if text:
-                        print("Received keystroke...")
-                        result = await controller.on_keystroke(text)
+                        print("Received text update...")
+                        result = await controller.on_text_update(text)
                         await websocket.send_json(result)
                 
                 elif msg_type == "submit":

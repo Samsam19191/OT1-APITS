@@ -4,6 +4,8 @@ StreamController and KVCacheManager interfaces for anticipatory prefill.
 
 from abc import ABC
 from dataclasses import dataclass
+from hashlib import sha256
+import os
 from typing import AsyncIterator, Optional, Any
 from enum import Enum
 import asyncio
@@ -19,6 +21,42 @@ class CacheState:
     confirmed_text: str = ""
     confirmed_token_count: int = 0
 
+    def save(self, filepath: str):
+        """
+        Serializes the cache state to disk.
+        """
+        # We save the object as a dictionary to be safe against class definition changes
+        state_dict = {
+            "past_key_values": self.past_key_values,
+            "confirmed_text": self.confirmed_text,
+            "confirmed_token_count": self.confirmed_token_count
+        }
+        torch.save(state_dict, filepath)
+        print(f"[CacheState] Saved to {filepath}")
+
+    @classmethod
+    def load(cls, filepath: str, device: str = "cpu") -> 'CacheState':
+        """
+        Loads the cache state from disk.
+        Args:
+            filepath: Path to the .pt file
+            device: 'cpu' or 'cuda' (maps tensors to this device)
+        """
+        try:
+            data = torch.load(filepath, map_location=device, weights_only=False)
+            
+            return cls(
+                past_key_values=data["past_key_values"],
+                confirmed_text=data["confirmed_text"],
+                confirmed_token_count=data["confirmed_token_count"]
+            )
+        except FileNotFoundError:
+            print(f"[CacheState] File not found: {filepath}")
+            return cls() # Return empty state
+        except Exception as e:
+            print(f"[CacheState] Error loading cache: {e}")
+            return cls()
+
 class KVCacheManager(ABC):
     """
     Abstract interface for KV-cache management.
@@ -31,28 +69,42 @@ class KVCacheManager(ABC):
         self.tokenizer = tokenizer
         self.device = device
         self._state = CacheState()
+        self.is_first_session = True
     
     async def initialize(self, base_prompt: str) -> CacheState:
         """
         Initialize cache with base prompt (system prompt + schema).
         Resets any existing state effectively starting a fresh session.
         """
-        print(f"\n[KV] Initializing with prompt: '{base_prompt}'")
-        self._state = CacheState()
 
-        if not base_prompt:
-            return self._state
+        if self.is_first_session:
+            print(f"\n[KV] Initializing with prompt: '{base_prompt}'")
+            self._state = CacheState()
 
-        inputs = self.tokenizer(base_prompt, return_tensors="pt").to(self.device)
+            if not base_prompt:
+                return self._state
 
-        with torch.no_grad():
-            outputs = self.model(**inputs, use_cache=True)
+            inputs = self.tokenizer(base_prompt, return_tensors="pt").to(self.device)
 
-        self._state.past_key_values = outputs.past_key_values
-        self._state.confirmed_text = base_prompt
-        self._state.confirmed_token_count = inputs.input_ids.shape[1]
+            with torch.no_grad():
+                outputs = self.model(**inputs, use_cache=True)
 
-        print(f"[KV] Init complete. Cache size: {self._state.confirmed_token_count} tokens.")
+            self._state.past_key_values = outputs.past_key_values
+            self._state.confirmed_text = base_prompt
+            self._state.confirmed_token_count = inputs.input_ids.shape[1]
+
+            filename = sha256(base_prompt.encode("utf-8")).hexdigest()
+            os.makedirs("./cache", exist_ok=True)
+            self._state.save("./cache/" + filename + ".pt")
+            self.is_first_session = False
+
+            print(f"[KV] Init complete. Cache size: {self._state.confirmed_token_count} tokens.")
+        else: 
+            print(f"[KV] CacheState already exists.Skipping initialization.")
+
+            filename = sha256(base_prompt.encode("utf-8")).hexdigest()
+            self._state = CacheState.load("./cache/" + filename + ".pt", device=self.device)
+
         return self._state
     
     async def extend(self, new_text: str) -> CacheState:
@@ -297,7 +349,7 @@ class StreamController:
         # This sends the system prompt to the GPU so it's ready before the user types 'A'.
         await self.cache_manager.initialize(base_prompt)
 
-    async def on_keystroke(self, text: str) -> dict:
+    async def on_text_update(self, text: str) -> dict:
         """
         Handle a keystroke. 
         - Updates text immediately.
@@ -356,6 +408,7 @@ class StreamController:
             "confirmed_text": self.confirmed_text,
             "pending_processing": self.current_text[len(self.confirmed_text):]
         }
+
 
     def _reset_debounce_timer(self):
         """Cancels the WAITING timer, but leaves the RUNNING extension alone."""
@@ -459,18 +512,27 @@ class StreamController:
             self.confirmed_text = self.current_text
 
         yield {
-            "event": "submit_start",
-            "final_text": self.current_text,
-            "cache_token_count": self.cache_manager._state.confirmed_token_count
+            "event": "submit_start"
         }
         
         start_time = asyncio.get_event_loop().time()
-        
         generated_so_far = ""
+        first_token = True
+
         async for token in self.cache_manager.generate(max_new_tokens=100):
+            if first_token:
+                ttft_ms = (asyncio.get_event_loop().time() - start_time) * 1000
+                yield {
+                    "event": "generation_start",
+                    "time_to_first_token_ms": ttft_ms
+                }
+                first_token = False
             generated_so_far += token
             # Yield tokens? (Depends on how you want to pipe it, usually yes)
-            yield { "event": "generation_token", "token": token }
+            yield {
+                "event": "generation_token",
+                "token": token,
+            }
 
         total_time = (asyncio.get_event_loop().time() - start_time) * 1000
         
