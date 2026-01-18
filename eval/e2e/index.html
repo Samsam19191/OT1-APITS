@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E2E Anticipatory Prefill Evaluation</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent: #58a6ff;
+            --success: #3fb950;
+            --warning: #d29922;
+            --border: #30363d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent), #a371f7);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .panel h2 {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        input,
+        select {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.6rem;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            border: none;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            filter: brightness(1.1);
+        }
+
+        .btn-primary:disabled {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            cursor: not-allowed;
+        }
+
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+        }
+
+        .status-dot.connected {
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        .live-view {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .live-box {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            min-height: 150px;
+            max-height: 250px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .live-box.prompt {
+            border-left: 3px solid var(--accent);
+        }
+
+        .live-box.output {
+            border-left: 3px solid var(--success);
+            color: var(--success);
+        }
+
+        .live-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--success));
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .metrics-bar {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .metric-item {
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 0.6rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .results-table th {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .results-table td {
+            font-family: 'Fira Code', monospace;
+        }
+
+        .improvement {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0;
+            }
+        }
+
+        .cursor {
+            animation: blink 1s infinite;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>⚡ E2E Anticipatory Prefill Evaluation</h1>
+        <p class="subtitle">True end-to-end metrics measured from browser</p>
+
+        <div class="status-bar">
+            <div class="status-dot" id="connectionDot"></div>
+            <span id="connectionStatus">Connecting...</span>
+        </div>
+
+        <!-- Config Panel -->
+        <div class="panel">
+            <h2>Configuration</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Model</label>
+                    <select id="modelSelect">
+                        <option value="Qwen/Qwen2.5-Coder-3B-Instruct">Qwen2.5-Coder-3B</option>
+                        <option value="Qwen/Qwen2.5-Coder-1.5B-Instruct">Qwen2.5-Coder-1.5B</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Database</label>
+                    <select id="dbSelect">
+                        <option value="car_1">car_1</option>
+                        <option value="dog_kennels">dog_kennels</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Questions</label>
+                    <input type="number" id="limitInput" value="3" min="1" max="20">
+                </div>
+                <div class="form-group">
+                    <label>Typing Speed (cps)</label>
+                    <input type="number" id="speedInput" value="100" min="20" max="500">
+                </div>
+            </div>
+            <button class="btn-primary" id="launchBtn">🚀 Launch E2E Evaluation</button>
+        </div>
+
+        <!-- Live View Panel -->
+        <div class="panel" id="livePanel">
+            <h2 id="liveTitle">Live View</h2>
+            <div class="progress-info">
+                <span id="progressLabel">Ready</span>
+                <span id="currentQuestion">-</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <div class="live-view">
+                <div>
+                    <div class="live-label">Prompt (typing...)</div>
+                    <div class="live-box prompt" id="livePrompt">Waiting...</div>
+                </div>
+                <div>
+                    <div class="live-label">Generated Output</div>
+                    <div class="live-box output" id="liveOutput">-</div>
+                </div>
+            </div>
+
+            <div class="metrics-bar">
+                <div class="metric-item">
+                    <div class="metric-value" id="currentTtft">-</div>
+                    <div class="metric-label">Current TTFT (E2E)</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value" id="avgAntTtft">-</div>
+                    <div class="metric-label">Avg Anticipatory</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value" id="avgBaseTtft">-</div>
+                    <div class="metric-label">Avg Baseline</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value improvement" id="speedup">-</div>
+                    <div class="metric-label">Speedup</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Panel -->
+        <div class="panel hidden" id="resultsPanel">
+            <h2>Final Results</h2>
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Question</th>
+                        <th>Anticipatory TTFT</th>
+                        <th>Baseline TTFT</th>
+                        <th>Speedup</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsBody"></tbody>
+            </table>
+            <p style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.8rem;">
+                📄 Report saved to: <code id="reportPath">-</code>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const WS_URL = 'ws://localhost:8765';
+        let ws = null;
+        let evalState = {
+            running: false,
+            mode: null, // 'anticipatory' or 'baseline'
+            questions: [],
+            currentIdx: 0,
+            typingSpeed: 100,
+            submitTime: null,
+            results: { anticipatory: [], baseline: [] }
+        };
+
+        // DOM
+        const $ = id => document.getElementById(id);
+        const connectionDot = $('connectionDot');
+        const connectionStatus = $('connectionStatus');
+        const launchBtn = $('launchBtn');
+        const livePrompt = $('livePrompt');
+        const liveOutput = $('liveOutput');
+        const liveTitle = $('liveTitle');
+        const progressLabel = $('progressLabel');
+        const progressFill = $('progressFill');
+        const currentQuestion = $('currentQuestion');
+        const currentTtft = $('currentTtft');
+        const avgAntTtft = $('avgAntTtft');
+        const avgBaseTtft = $('avgBaseTtft');
+        const speedup = $('speedup');
+        const resultsPanel = $('resultsPanel');
+        const resultsBody = $('resultsBody');
+        const reportPath = $('reportPath');
+
+        function connect() {
+            ws = new WebSocket(WS_URL);
+            ws.onopen = () => {
+                connectionDot.classList.add('connected');
+                connectionStatus.textContent = 'Connected';
+            };
+            ws.onclose = () => {
+                connectionDot.classList.remove('connected');
+                connectionStatus.textContent = 'Disconnected';
+                setTimeout(connect, 2000);
+            };
+            ws.onmessage = (e) => handleMessage(JSON.parse(e.data));
+        }
+
+        function handleMessage(data) {
+            console.log('[Server]', data);
+
+            switch (data.event) {
+                case 'questions_loaded':
+                    evalState.questions = data.questions;
+                    progressLabel.textContent = `Loaded ${data.questions.length} questions`;
+                    runNextQuestion();
+                    break;
+
+                case 'keystroke_ack':
+                    // Server acknowledged keystroke (KV cache updated)
+                    break;
+
+                case 'first_token':
+                    // MEASURE E2E TTFT HERE
+                    const ttft = Date.now() - evalState.submitTime;
+                    currentTtft.textContent = ttft + 'ms';
+                    evalState.results[evalState.mode].push({
+                        question_id: evalState.questions[evalState.currentIdx].question_id,
+                        ttft: ttft
+                    });
+                    updateAverages();
+                    break;
+
+                case 'token':
+                    liveOutput.textContent += data.text;
+                    break;
+
+                case 'generation_complete':
+                    // Move to next question after short delay
+                    setTimeout(() => {
+                        evalState.currentIdx++;
+                        runNextQuestion();
+                    }, 300);
+                    break;
+
+                case 'report_saved':
+                    reportPath.textContent = data.path;
+                    break;
+            }
+        }
+
+        function updateAverages() {
+            const ant = evalState.results.anticipatory;
+            const base = evalState.results.baseline;
+
+            if (ant.length > 0) {
+                const avg = ant.reduce((s, r) => s + r.ttft, 0) / ant.length;
+                avgAntTtft.textContent = Math.round(avg) + 'ms';
+            }
+            if (base.length > 0) {
+                const avg = base.reduce((s, r) => s + r.ttft, 0) / base.length;
+                avgBaseTtft.textContent = Math.round(avg) + 'ms';
+            }
+            if (ant.length > 0 && base.length > 0) {
+                const antAvg = ant.reduce((s, r) => s + r.ttft, 0) / ant.length;
+                const baseAvg = base.reduce((s, r) => s + r.ttft, 0) / base.length;
+                speedup.textContent = (baseAvg / antAvg).toFixed(1) + 'x';
+            }
+        }
+
+        async function runNextQuestion() {
+            // Check if we need to switch modes
+            if (evalState.currentIdx >= evalState.questions.length) {
+                if (evalState.mode === 'anticipatory') {
+                    // Switch to baseline
+                    evalState.mode = 'baseline';
+                    evalState.currentIdx = 0;
+                    liveTitle.textContent = 'Baseline Mode (Cold Start)';
+                    progressLabel.textContent = 'Starting baseline evaluation...';
+                    runNextQuestion();
+                    return;
+                } else {
+                    // Done!
+                    finishEval();
+                    return;
+                }
+            }
+
+            const q = evalState.questions[evalState.currentIdx];
+            const total = evalState.questions.length;
+            const pct = ((evalState.currentIdx + 1) / total) * 100;
+            progressFill.style.width = pct + '%';
+            currentQuestion.textContent = `${evalState.currentIdx + 1}/${total}`;
+            progressLabel.textContent = `[${evalState.mode}] ${q.question_id}`;
+
+            livePrompt.textContent = '';
+            liveOutput.textContent = '';
+
+            // Simulate typing the prompt character by character
+            const prompt = q.prompt;
+            const charDelay = 1000 / evalState.typingSpeed;
+
+            for (let i = 0; i < prompt.length; i++) {
+                livePrompt.textContent = prompt.slice(0, i + 1) + '▌';
+
+                // Send keystroke to server (for KV cache building in anticipatory mode)
+                if (evalState.mode === 'anticipatory') {
+                    ws.send(JSON.stringify({
+                        type: 'keystroke',
+                        text: prompt.slice(0, i + 1),
+                        question_idx: evalState.currentIdx
+                    }));
+                }
+
+                await sleep(charDelay);
+            }
+
+            livePrompt.textContent = prompt;
+
+            // Submit - START E2E TIMER
+            evalState.submitTime = Date.now();
+            ws.send(JSON.stringify({
+                type: 'submit',
+                mode: evalState.mode,
+                question_idx: evalState.currentIdx
+            }));
+        }
+
+        function finishEval() {
+            launchBtn.disabled = false;
+            launchBtn.textContent = 'Launch E2E Evaluation';
+            progressLabel.textContent = 'Evaluation complete!';
+            liveTitle.textContent = '✅ Complete';
+
+            // Show results table
+            resultsPanel.classList.remove('hidden');
+            resultsBody.innerHTML = '';
+
+            const ant = evalState.results.anticipatory;
+            const base = evalState.results.baseline;
+
+            for (let i = 0; i < ant.length; i++) {
+                const a = ant[i];
+                const b = base[i] || { ttft: 0 };
+                const spd = b.ttft / a.ttft;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${a.question_id}</td>
+                    <td>${a.ttft} ms</td>
+                    <td>${b.ttft} ms</td>
+                    <td class="improvement">${spd.toFixed(1)}x</td>
+                `;
+                resultsBody.appendChild(row);
+            }
+
+            // Request report generation
+            ws.send(JSON.stringify({
+                type: 'generate_report',
+                results: evalState.results
+            }));
+        }
+
+        function sleep(ms) {
+            return new Promise(r => setTimeout(r, ms));
+        }
+
+        launchBtn.addEventListener('click', () => {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                alert('Not connected');
+                return;
+            }
+
+            // Reset state
+            evalState = {
+                running: true,
+                mode: 'anticipatory',
+                questions: [],
+                currentIdx: 0,
+                typingSpeed: parseInt($('speedInput').value),
+                submitTime: null,
+                results: { anticipatory: [], baseline: [] }
+            };
+
+            launchBtn.disabled = true;
+            launchBtn.textContent = 'Running...';
+            resultsPanel.classList.add('hidden');
+            liveTitle.textContent = 'Anticipatory Mode (KV Cache)';
+            avgAntTtft.textContent = '-';
+            avgBaseTtft.textContent = '-';
+            speedup.textContent = '-';
+
+            // Request questions from server
+            ws.send(JSON.stringify({
+                type: 'load_questions',
+                model: $('modelSelect').value,
+                db: $('dbSelect').value,
+                limit: parseInt($('limitInput').value)
+            }));
+        });
+
+        connect();
+    </script>
+</body>
+
+</html>
