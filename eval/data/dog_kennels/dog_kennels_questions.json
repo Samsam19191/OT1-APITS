@@ -1,0 +1,412 @@
+[
+  {
+    "id": "dog_kennels_918",
+    "question": "Which states have both owners and professionals living there?",
+    "gold_query": "SELECT state FROM Owners INTERSECT SELECT state FROM Professionals"
+  },
+  {
+    "id": "dog_kennels_919",
+    "question": "Find the states where both owners and professionals live.",
+    "gold_query": "SELECT state FROM Owners INTERSECT SELECT state FROM Professionals"
+  },
+  {
+    "id": "dog_kennels_920",
+    "question": "What is the average age of the dogs who have gone through any treatments?",
+    "gold_query": "SELECT avg(age) FROM Dogs WHERE dog_id IN ( SELECT dog_id FROM Treatments )"
+  },
+  {
+    "id": "dog_kennels_921",
+    "question": "Find the average age of the dogs who went through treatments.",
+    "gold_query": "SELECT avg(age) FROM Dogs WHERE dog_id IN ( SELECT dog_id FROM Treatments )"
+  },
+  {
+    "id": "dog_kennels_922",
+    "question": "Which professionals live in the state of Indiana or have done treatment on more than 2 treatments? List his or her id, last name and cell phone.",
+    "gold_query": "SELECT professional_id ,  last_name ,  cell_number FROM Professionals WHERE state  =  'Indiana' UNION SELECT T1.professional_id ,  T1.last_name ,  T1.cell_number FROM Professionals AS T1 JOIN Treatments AS T2 ON T1.professional_id  =  T2.professional_id GROUP BY T1.professional_id HAVING count(*)  >  2"
+  },
+  {
+    "id": "dog_kennels_923",
+    "question": "Find the id, last name and cell phone of the professionals who live in the state of Indiana or have performed more than two treatments.",
+    "gold_query": "SELECT professional_id ,  last_name ,  cell_number FROM Professionals WHERE state  =  'Indiana' UNION SELECT T1.professional_id ,  T1.last_name ,  T1.cell_number FROM Professionals AS T1 JOIN Treatments AS T2 ON T1.professional_id  =  T2.professional_id GROUP BY T1.professional_id HAVING count(*)  >  2"
+  },
+  {
+    "id": "dog_kennels_924",
+    "question": "Which dogs have not cost their owner more than 1000 for treatment? List the dog names.",
+    "gold_query": "SELECT name FROM Dogs WHERE dog_id NOT IN( SELECT dog_id FROM Treatments GROUP BY dog_id HAVING sum(cost_of_treatment)  >  1000 )"
+  },
+  {
+    "id": "dog_kennels_925",
+    "question": "What are the names of the dogs for which the owner spent more than 1000 for treatment?",
+    "gold_query": "SELECT name FROM Dogs WHERE dog_id NOT IN( SELECT dog_id FROM Treatments GROUP BY dog_id HAVING sum(cost_of_treatment)  >  1000 )"
+  },
+  {
+    "id": "dog_kennels_926",
+    "question": "Which first names are used for professionals or owners but are not used as dog names?",
+    "gold_query": "SELECT first_name FROM Professionals UNION SELECT first_name FROM Owners EXCEPT SELECT name FROM Dogs"
+  },
+  {
+    "id": "dog_kennels_927",
+    "question": "Find the first names that are used for professionals or owners but are not used as dog names.",
+    "gold_query": "SELECT first_name FROM Professionals UNION SELECT first_name FROM Owners EXCEPT SELECT name FROM Dogs"
+  },
+  {
+    "id": "dog_kennels_928",
+    "question": "Which professional did not operate any treatment on dogs? List the professional's id, role and email.",
+    "gold_query": "SELECT professional_id ,  role_code ,  email_address FROM Professionals EXCEPT SELECT T1.professional_id ,  T1.role_code ,  T1.email_address FROM Professionals AS T1 JOIN Treatments AS T2 ON T1.professional_id  =  T2.professional_id"
+  },
+  {
+    "id": "dog_kennels_929",
+    "question": "Give me the id, role and email of the professionals who did not perform any treatment on dogs.",
+    "gold_query": "SELECT professional_id ,  role_code ,  email_address FROM Professionals EXCEPT SELECT T1.professional_id ,  T1.role_code ,  T1.email_address FROM Professionals AS T1 JOIN Treatments AS T2 ON T1.professional_id  =  T2.professional_id"
+  },
+  {
+    "id": "dog_kennels_930",
+    "question": "Which owner owns the most dogs? List the owner id, first name and last name.",
+    "gold_query": "SELECT T1.owner_id ,  T2.first_name ,  T2.last_name FROM Dogs AS T1 JOIN Owners AS T2 ON T1.owner_id  =  T2.owner_id GROUP BY T1.owner_id ORDER BY count(*) DESC LIMIT 1"
+  },
+  {
+    "id": "dog_kennels_931",
+    "question": "Return the owner id, first name and last name of the owner who has the most dogs.",
+    "gold_query": "SELECT T1.owner_id ,  T2.first_name ,  T2.last_name FROM Dogs AS T1 JOIN Owners AS T2 ON T1.owner_id  =  T2.owner_id GROUP BY T1.owner_id ORDER BY count(*) DESC LIMIT 1"
+  },
+  {
+    "id": "dog_kennels_932",
+    "question": "Which professionals have done at least two treatments? List the professional's id, role, and first name.",
+    "gold_query": "SELECT T1.professional_id ,  T1.role_code ,  T1.first_name FROM Professionals AS T1 JOIN Treatments AS T2 ON T1.professional_id  =  T2.professional_id GROUP BY T1.professional_id HAVING count(*)  >=  2"
+  },
+  {
+    "id": "dog_kennels_933",
+    "question": "What are the id, role, and first name of the professionals who have performed two or more treatments?",
+    "gold_query": "SELECT T1.professional_id ,  T1.role_code ,  T1.first_name FROM Professionals AS T1 JOIN Treatments AS T2 ON T1.professional_id  =  T2.professional_id GROUP BY T1.professional_id HAVING count(*)  >=  2"
+  },
+  {
+    "id": "dog_kennels_934",
+    "question": "What is the name of the breed with the most dogs?",
+    "gold_query": "SELECT T1.breed_name FROM Breeds AS T1 JOIN Dogs AS T2 ON T1.breed_code  =  T2.breed_code GROUP BY T1.breed_name ORDER BY count(*) DESC LIMIT 1"
+  },
+  {
+    "id": "dog_kennels_935",
+    "question": "Which breed do the most dogs have? Give me the breed name.",
+    "gold_query": "SELECT T1.breed_name FROM Breeds AS T1 JOIN Dogs AS T2 ON T1.breed_code  =  T2.breed_code GROUP BY T1.breed_name ORDER BY count(*) DESC LIMIT 1"
+  },
+  {
+    "id": "dog_kennels_936",
+    "question": "Which owner has paid for the most treatments on his or her dogs? List the owner id and last name.",
+    "gold_query": "SELECT T1.owner_id ,  T1.last_name FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id  =  T2.owner_id JOIN Treatments AS T3 ON T2.dog_id  =  T3.dog_id GROUP BY T1.owner_id ORDER BY count(*) DESC LIMIT 1"
+  },
+  {
+    "id": "dog_kennels_937",
+    "question": "Tell me the owner id and last name of the owner who spent the most on treatments of his or her dogs.",
+    "gold_query": "SELECT T1.owner_id ,  T1.last_name FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id  =  T2.owner_id JOIN Treatments AS T3 ON T2.dog_id  =  T3.dog_id GROUP BY T1.owner_id ORDER BY count(*) DESC LIMIT 1"
+  },
+  {
+    "id": "dog_kennels_938",
+    "question": "What is the description of the treatment type that costs the least money in total?",
+    "gold_query": "SELECT T1.treatment_type_description FROM Treatment_types AS T1 JOIN Treatments AS T2 ON T1.treatment_type_code  =  T2.treatment_type_code GROUP BY T1.treatment_type_code ORDER BY sum(cost_of_treatment) ASC LIMIT 1"
+  },
+  {
+    "id": "dog_kennels_939",
+    "question": "Give me the description of the treatment type whose total cost is the lowest.",
+    "gold_query": "SELECT T1.treatment_type_description FROM Treatment_types AS T1 JOIN Treatments AS T2 ON T1.treatment_type_code  =  T2.treatment_type_code GROUP BY T1.treatment_type_code ORDER BY sum(cost_of_treatment) ASC LIMIT 1"
+  },
+  {
+    "id": "dog_kennels_940",
+    "question": "Which owner has paid the largest amount of money in total for their dogs? Show the owner id and zip code.",
+    "gold_query": "SELECT T1.owner_id ,  T1.zip_code FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id  =  T2.owner_id JOIN Treatments AS T3 ON T2.dog_id  =  T3.dog_id GROUP BY T1.owner_id ORDER BY sum(T3.cost_of_treatment) DESC LIMIT 1"
+  },
+  {
+    "id": "dog_kennels_941",
+    "question": "Find the owner id and zip code of the owner who spent the most money in total for his or her dogs.",
+    "gold_query": "SELECT T1.owner_id ,  T1.zip_code FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id  =  T2.owner_id JOIN Treatments AS T3 ON T2.dog_id  =  T3.dog_id GROUP BY T1.owner_id ORDER BY sum(T3.cost_of_treatment) DESC LIMIT 1"
+  },
+  {
+    "id": "dog_kennels_942",
+    "question": "Which professionals have done at least two types of treatments? List the professional id and cell phone.",
+    "gold_query": "SELECT T1.professional_id ,  T1.cell_number FROM Professionals AS T1 JOIN Treatments AS T2 ON T1.professional_id  =  T2.professional_id GROUP BY T1.professional_id HAVING count(*)  >=  2"
+  },
+  {
+    "id": "dog_kennels_943",
+    "question": "Find the id and cell phone of the professionals who operate two or more types of treatments.",
+    "gold_query": "SELECT T1.professional_id ,  T1.cell_number FROM Professionals AS T1 JOIN Treatments AS T2 ON T1.professional_id  =  T2.professional_id GROUP BY T1.professional_id HAVING count(*)  >=  2"
+  },
+  {
+    "id": "dog_kennels_944",
+    "question": "What are the first name and last name of the professionals who have done treatment with cost below average?",
+    "gold_query": "SELECT DISTINCT T1.first_name ,  T1.last_name FROM Professionals AS T1 JOIN Treatments AS T2 WHERE cost_of_treatment  <  ( SELECT avg(cost_of_treatment) FROM Treatments )"
+  },
+  {
+    "id": "dog_kennels_945",
+    "question": "Which professionals have operated a treatment that costs less than the average? Give me theor first names and last names.",
+    "gold_query": "SELECT DISTINCT T1.first_name ,  T1.last_name FROM Professionals AS T1 JOIN Treatments AS T2 WHERE cost_of_treatment  <  ( SELECT avg(cost_of_treatment) FROM Treatments )"
+  },
+  {
+    "id": "dog_kennels_946",
+    "question": "List the date of each treatment, together with the first name of the professional who operated it.",
+    "gold_query": "SELECT T1.date_of_treatment ,  T2.first_name FROM Treatments AS T1 JOIN Professionals AS T2 ON T1.professional_id  =  T2.professional_id"
+  },
+  {
+    "id": "dog_kennels_947",
+    "question": "What are the date and the operating professional's first name of each treatment?",
+    "gold_query": "SELECT T1.date_of_treatment ,  T2.first_name FROM Treatments AS T1 JOIN Professionals AS T2 ON T1.professional_id  =  T2.professional_id"
+  },
+  {
+    "id": "dog_kennels_948",
+    "question": "List the cost of each treatment and the corresponding treatment type description.",
+    "gold_query": "SELECT T1.cost_of_treatment ,  T2.treatment_type_description FROM Treatments AS T1 JOIN treatment_types AS T2 ON T1.treatment_type_code  =  T2.treatment_type_code"
+  },
+  {
+    "id": "dog_kennels_949",
+    "question": "What are the cost and treatment type description of each treatment?",
+    "gold_query": "SELECT T1.cost_of_treatment ,  T2.treatment_type_description FROM Treatments AS T1 JOIN treatment_types AS T2 ON T1.treatment_type_code  =  T2.treatment_type_code"
+  },
+  {
+    "id": "dog_kennels_950",
+    "question": "List each owner's first name, last name, and the size of his for her dog.",
+    "gold_query": "SELECT T1.first_name ,  T1.last_name ,  T2.size_code FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id  =  T2.owner_id"
+  },
+  {
+    "id": "dog_kennels_951",
+    "question": "What are each owner's first name, last name, and the size of their dog?",
+    "gold_query": "SELECT T1.first_name ,  T1.last_name ,  T2.size_code FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id  =  T2.owner_id"
+  },
+  {
+    "id": "dog_kennels_952",
+    "question": "List pairs of the owner's first name and the dogs's name.",
+    "gold_query": "SELECT T1.first_name ,  T2.name FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id  =  T2.owner_id"
+  },
+  {
+    "id": "dog_kennels_953",
+    "question": "What are each owner's first name and their dogs's name?",
+    "gold_query": "SELECT T1.first_name ,  T2.name FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id  =  T2.owner_id"
+  },
+  {
+    "id": "dog_kennels_954",
+    "question": "List the names of the dogs of the rarest breed and the treatment dates of them.",
+    "gold_query": "SELECT T1.name ,  T2.date_of_treatment FROM Dogs AS T1 JOIN Treatments AS T2 ON T1.dog_id  =  T2.dog_id WHERE T1.breed_code  =  ( SELECT breed_code FROM Dogs GROUP BY breed_code ORDER BY count(*) ASC LIMIT 1 )"
+  },
+  {
+    "id": "dog_kennels_955",
+    "question": "Which dogs are of the rarest breed? Show their names and treatment dates.",
+    "gold_query": "SELECT T1.name ,  T2.date_of_treatment FROM Dogs AS T1 JOIN Treatments AS T2 ON T1.dog_id  =  T2.dog_id WHERE T1.breed_code  =  ( SELECT breed_code FROM Dogs GROUP BY breed_code ORDER BY count(*) ASC LIMIT 1 )"
+  },
+  {
+    "id": "dog_kennels_956",
+    "question": "Which dogs are owned by someone who lives in Virginia? List the owner's first name and the dog's name.",
+    "gold_query": "SELECT T1.first_name ,  T2.name FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id  =  T2.owner_id WHERE T1.state  =  'Virginia'"
+  },
+  {
+    "id": "dog_kennels_957",
+    "question": "Find the first names of owners living in Virginia and the names of dogs they own.",
+    "gold_query": "SELECT T1.first_name ,  T2.name FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id  =  T2.owner_id WHERE T1.state  =  'Virginia'"
+  },
+  {
+    "id": "dog_kennels_958",
+    "question": "What are the arriving date and the departing date of the dogs who have gone through a treatment?",
+    "gold_query": "SELECT DISTINCT T1.date_arrived ,  T1.date_departed FROM Dogs AS T1 JOIN Treatments AS T2 ON T1.dog_id  =  T2.dog_id"
+  },
+  {
+    "id": "dog_kennels_959",
+    "question": "Find the arriving date and the departing date of the dogs that received a treatment.",
+    "gold_query": "SELECT DISTINCT T1.date_arrived ,  T1.date_departed FROM Dogs AS T1 JOIN Treatments AS T2 ON T1.dog_id  =  T2.dog_id"
+  },
+  {
+    "id": "dog_kennels_960",
+    "question": "List the last name of the owner owning the youngest dog.",
+    "gold_query": "SELECT T1.last_name FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id  =  T2.owner_id WHERE T2.age  =  ( SELECT max(age) FROM Dogs )"
+  },
+  {
+    "id": "dog_kennels_961",
+    "question": "Who owns the youngest dog? Give me his or her last name.",
+    "gold_query": "SELECT T1.last_name FROM Owners AS T1 JOIN Dogs AS T2 ON T1.owner_id  =  T2.owner_id WHERE T2.age  =  ( SELECT max(age) FROM Dogs )"
+  },
+  {
+    "id": "dog_kennels_962",
+    "question": "List the emails of the professionals who live in the state of Hawaii or the state of Wisconsin.",
+    "gold_query": "SELECT email_address FROM Professionals WHERE state  =  'Hawaii' OR state  =  'Wisconsin'"
+  },
+  {
+    "id": "dog_kennels_963",
+    "question": "What are the emails of the professionals living in either the state of Hawaii or the state of Wisconsin?",
+    "gold_query": "SELECT email_address FROM Professionals WHERE state  =  'Hawaii' OR state  =  'Wisconsin'"
+  },
+  {
+    "id": "dog_kennels_964",
+    "question": "What are the arriving date and the departing date of all the dogs?",
+    "gold_query": "SELECT date_arrived ,  date_departed FROM Dogs"
+  },
+  {
+    "id": "dog_kennels_965",
+    "question": "List the arrival date and the departure date for all the dogs.",
+    "gold_query": "SELECT date_arrived ,  date_departed FROM Dogs"
+  },
+  {
+    "id": "dog_kennels_966",
+    "question": "How many dogs went through any treatments?",
+    "gold_query": "SELECT count(DISTINCT dog_id) FROM Treatments"
+  },
+  {
+    "id": "dog_kennels_967",
+    "question": "Count the number of dogs that went through a treatment.",
+    "gold_query": "SELECT count(DISTINCT dog_id) FROM Treatments"
+  },
+  {
+    "id": "dog_kennels_968",
+    "question": "How many professionals have performed any treatment to dogs?",
+    "gold_query": "SELECT count(DISTINCT professional_id) FROM Treatments"
+  },
+  {
+    "id": "dog_kennels_969",
+    "question": "Find the number of professionals who have ever treated dogs.",
+    "gold_query": "SELECT count(DISTINCT professional_id) FROM Treatments"
+  },
+  {
+    "id": "dog_kennels_970",
+    "question": "Which professionals live in a city containing the substring 'West'? List his or her role, street, city and state.",
+    "gold_query": "SELECT role_code ,  street ,  city ,  state FROM professionals WHERE city LIKE '%West%'"
+  },
+  {
+    "id": "dog_kennels_971",
+    "question": "Find the role, street, city and state of the professionals living in a city that contains the substring 'West'.",
+    "gold_query": "SELECT role_code ,  street ,  city ,  state FROM professionals WHERE city LIKE '%West%'"
+  },
+  {
+    "id": "dog_kennels_972",
+    "question": "Which owners live in the state whose name contains the substring 'North'? List his first name, last name and email.",
+    "gold_query": "SELECT first_name ,  last_name ,  email_address FROM Owners WHERE state LIKE '%North%'"
+  },
+  {
+    "id": "dog_kennels_973",
+    "question": "Return the first name, last name and email of the owners living in a state whose name contains the substring 'North'.",
+    "gold_query": "SELECT first_name ,  last_name ,  email_address FROM Owners WHERE state LIKE '%North%'"
+  },
+  {
+    "id": "dog_kennels_974",
+    "question": "How many dogs have an age below the average?",
+    "gold_query": "SELECT count(*) FROM Dogs WHERE age  <  ( SELECT avg(age) FROM Dogs )"
+  },
+  {
+    "id": "dog_kennels_975",
+    "question": "Count the number of dogs of an age below the average.",
+    "gold_query": "SELECT count(*) FROM Dogs WHERE age  <  ( SELECT avg(age) FROM Dogs )"
+  },
+  {
+    "id": "dog_kennels_976",
+    "question": "How much does the most recent treatment cost?",
+    "gold_query": "SELECT cost_of_treatment FROM Treatments ORDER BY date_of_treatment DESC LIMIT 1"
+  },
+  {
+    "id": "dog_kennels_977",
+    "question": "Show me the cost of the most recently performed treatment.",
+    "gold_query": "SELECT cost_of_treatment FROM Treatments ORDER BY date_of_treatment DESC LIMIT 1"
+  },
+  {
+    "id": "dog_kennels_978",
+    "question": "How many dogs have not gone through any treatment?",
+    "gold_query": "SELECT count(*) FROM Dogs WHERE dog_id NOT IN ( SELECT dog_id FROM Treatments )"
+  },
+  {
+    "id": "dog_kennels_979",
+    "question": "Tell me the number of dogs that have received any treatment.",
+    "gold_query": "SELECT count(*) FROM Dogs WHERE dog_id NOT IN ( SELECT dog_id FROM Treatments )"
+  },
+  {
+    "id": "dog_kennels_980",
+    "question": "How many owners temporarily do not have any dogs?",
+    "gold_query": "SELECT count(*) FROM Owners WHERE owner_id NOT IN ( SELECT owner_id FROM Dogs )"
+  },
+  {
+    "id": "dog_kennels_981",
+    "question": "Find the number of owners who do not own any dogs at this moment.",
+    "gold_query": "SELECT count(*) FROM Owners WHERE owner_id NOT IN ( SELECT owner_id FROM Dogs )"
+  },
+  {
+    "id": "dog_kennels_982",
+    "question": "How many professionals did not operate any treatment on dogs?",
+    "gold_query": "SELECT count(*) FROM Professionals WHERE professional_id NOT IN ( SELECT professional_id FROM Treatments )"
+  },
+  {
+    "id": "dog_kennels_983",
+    "question": "Find the number of professionals who have not treated any dogs.",
+    "gold_query": "SELECT count(*) FROM Professionals WHERE professional_id NOT IN ( SELECT professional_id FROM Treatments )"
+  },
+  {
+    "id": "dog_kennels_984",
+    "question": "List the dog name, age and weight of the dogs who have been abandoned? 1 stands for yes, and 0 stands for no.",
+    "gold_query": "SELECT name ,  age ,  weight FROM Dogs WHERE abandoned_yn  =  1"
+  },
+  {
+    "id": "dog_kennels_985",
+    "question": "What are the dog name, age and weight of the dogs that were abandoned? Note that 1 stands for yes, and 0 stands for no in the tables.",
+    "gold_query": "SELECT name ,  age ,  weight FROM Dogs WHERE abandoned_yn  =  1"
+  },
+  {
+    "id": "dog_kennels_986",
+    "question": "What is the average age of all the dogs?",
+    "gold_query": "SELECT avg(age) FROM Dogs"
+  },
+  {
+    "id": "dog_kennels_987",
+    "question": "Compute the average age of all the dogs.",
+    "gold_query": "SELECT avg(age) FROM Dogs"
+  },
+  {
+    "id": "dog_kennels_988",
+    "question": "What is the age of the oldest dog?",
+    "gold_query": "SELECT max(age) FROM Dogs"
+  },
+  {
+    "id": "dog_kennels_989",
+    "question": "Tell me the age of the oldest dog.",
+    "gold_query": "SELECT max(age) FROM Dogs"
+  },
+  {
+    "id": "dog_kennels_990",
+    "question": "How much does each charge type costs? List both charge type and amount.",
+    "gold_query": "SELECT charge_type ,  charge_amount FROM Charges"
+  },
+  {
+    "id": "dog_kennels_991",
+    "question": "List each charge type and its amount.",
+    "gold_query": "SELECT charge_type ,  charge_amount FROM Charges"
+  },
+  {
+    "id": "dog_kennels_992",
+    "question": "How much does the most expensive charge type costs?",
+    "gold_query": "SELECT max(charge_amount) FROM Charges"
+  },
+  {
+    "id": "dog_kennels_993",
+    "question": "What is the charge amount of the most expensive charge type?",
+    "gold_query": "SELECT max(charge_amount) FROM Charges"
+  },
+  {
+    "id": "dog_kennels_994",
+    "question": "List the email, cell phone and home phone of all the professionals.",
+    "gold_query": "SELECT email_address ,  cell_number ,  home_phone FROM professionals"
+  },
+  {
+    "id": "dog_kennels_995",
+    "question": "What are the email, cell phone and home phone of each professional?",
+    "gold_query": "SELECT email_address ,  cell_number ,  home_phone FROM professionals"
+  },
+  {
+    "id": "dog_kennels_996",
+    "question": "What are all the possible breed type and size type combinations?",
+    "gold_query": "SELECT DISTINCT breed_code ,  size_code FROM dogs"
+  },
+  {
+    "id": "dog_kennels_997",
+    "question": "Find the distinct breed type and size type combinations for dogs.",
+    "gold_query": "SELECT DISTINCT breed_code ,  size_code FROM dogs"
+  },
+  {
+    "id": "dog_kennels_998",
+    "question": "List the first name of all the professionals along with the description of the treatment they have done.",
+    "gold_query": "SELECT DISTINCT T1.first_name ,  T3.treatment_type_description FROM professionals AS T1 JOIN Treatments AS T2 ON T1.professional_id  =  T2.professional_id JOIN Treatment_types AS T3 ON T2.treatment_type_code  =  T3.treatment_type_code"
+  },
+  {
+    "id": "dog_kennels_999",
+    "question": "What are each professional's first name and description of the treatment they have performed?",
+    "gold_query": "SELECT DISTINCT T1.first_name ,  T3.treatment_type_description FROM professionals AS T1 JOIN Treatments AS T2 ON T1.professional_id  =  T2.professional_id JOIN Treatment_types AS T3 ON T2.treatment_type_code  =  T3.treatment_type_code"
+  }
+]

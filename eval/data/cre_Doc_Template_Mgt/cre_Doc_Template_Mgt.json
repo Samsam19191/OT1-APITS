@@ -1,0 +1,162 @@
+[
+    {
+        "table": "ref_template_types",
+        "col_data": [
+            {
+                "column_name": "template_type_code",
+                "data_type": "CHAR(15)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 1
+            },
+            {
+                "column_name": "template_type_description",
+                "data_type": "VARCHAR(255)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 1
+            }
+        ]
+    },
+    {
+        "table": "templates",
+        "col_data": [
+            {
+                "column_name": "template_id",
+                "data_type": "INTEGER",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 1
+            },
+            {
+                "column_name": "version_number",
+                "data_type": "INTEGER",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 1
+            },
+            {
+                "column_name": "template_type_code",
+                "data_type": "CHAR(15)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 1
+            },
+            {
+                "column_name": "date_effective_from",
+                "data_type": "DATETIME",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "date_effective_to",
+                "data_type": "DATETIME",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "template_details",
+                "data_type": "VARCHAR(255)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 1
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "template_type_code",
+                "ref_table": "ref_template_types",
+                "ref_column": "template_type_code"
+            }
+        ]
+    },
+    {
+        "table": "documents",
+        "col_data": [
+            {
+                "column_name": "document_id",
+                "data_type": "INTEGER",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 1
+            },
+            {
+                "column_name": "template_id",
+                "data_type": "INTEGER",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "document_name",
+                "data_type": "VARCHAR(255)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "document_description",
+                "data_type": "VARCHAR(255)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "other_details",
+                "data_type": "VARCHAR(255)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "template_id",
+                "ref_table": "templates",
+                "ref_column": "template_id"
+            }
+        ]
+    },
+    {
+        "table": "paragraphs",
+        "col_data": [
+            {
+                "column_name": "paragraph_id",
+                "data_type": "INTEGER",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 1
+            },
+            {
+                "column_name": "document_id",
+                "data_type": "INTEGER",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 1
+            },
+            {
+                "column_name": "paragraph_text",
+                "data_type": "VARCHAR(255)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "other_details",
+                "data_type": "VARCHAR(255)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "document_id",
+                "ref_table": "documents",
+                "ref_column": "document_id"
+            }
+        ]
+    }
+]
