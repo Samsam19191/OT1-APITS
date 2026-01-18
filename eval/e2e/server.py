@@ -25,6 +25,36 @@ from src.stream_controller import KVCacheManager, StreamController
 from schema_loader import SchemaLoader
 from eval import load_questions
 
+import psutil
+import gc
+
+
+def cleanup_memory():
+    """Clean up memory between evaluation modes."""
+    gc.collect()
+    if torch.backends.mps.is_available():
+        try:
+            torch.mps.empty_cache()
+        except:
+            pass
+
+
+def get_memory_stats() -> Dict:
+    """Get current memory usage stats for Apple Silicon."""
+    process = psutil.Process(os.getpid())
+    stats = {
+        "ram_mb": process.memory_info().rss / (1024 * 1024),
+    }
+    
+    # MPS memory (PyTorch 2.1+)
+    if torch.backends.mps.is_available():
+        try:
+            stats["mps_allocated_mb"] = torch.mps.current_allocated_memory() / (1024 * 1024)
+        except:
+            stats["mps_allocated_mb"] = 0
+    
+    return stats
+
 
 class E2EServer:
     """WebSocket server for true E2E evaluation."""
@@ -154,6 +184,15 @@ IMPORTANT: Output ONLY the SQL query in a code block.
             
             await websocket.send(json.dumps({"event": "keystroke_ack"}))
         
+        elif msg_type == "cleanup_for_baseline":
+            # Clean up memory before starting baseline mode
+            print("[Server] Cleanup for baseline requested...")
+            cleanup_memory()
+            print("[Server] Memory cleanup done, waiting 1.5s...")
+            await asyncio.sleep(1.5)  # Brief pause to let system settle
+            print("[Server] Sending cleanup_complete event")
+            await websocket.send(json.dumps({"event": "cleanup_complete"}))
+        
         elif msg_type == "submit":
             # Client pressed enter - generate
             mode = data.get("mode", "anticipatory")
@@ -163,7 +202,18 @@ IMPORTANT: Output ONLY the SQL query in a code block.
                 # Use the pre-built KV cache
                 first_token_sent = False
                 accumulated_output = ""
+                
+                # Track memory
+                mem_start = get_memory_stats()
+                peak_ram = mem_start["ram_mb"]
+                peak_mps = mem_start.get("mps_allocated_mb", 0)
+                
                 async for event in self.controller.on_submit():
+                    # Sample memory periodically
+                    mem_now = get_memory_stats()
+                    peak_ram = max(peak_ram, mem_now["ram_mb"])
+                    peak_mps = max(peak_mps, mem_now.get("mps_allocated_mb", 0))
+                    
                     if event.get("event") == "generation_token":
                         token = event.get("token", "")
                         accumulated_output += token
@@ -182,7 +232,11 @@ IMPORTANT: Output ONLY the SQL query in a code block.
                     elif event.get("event") == "generation_complete":
                         break
                 
-                await websocket.send(json.dumps({"event": "generation_complete"}))
+                await websocket.send(json.dumps({
+                    "event": "generation_complete",
+                    "peak_ram_mb": round(peak_ram, 1),
+                    "peak_mps_mb": round(peak_mps, 1)
+                }))
                 
             else:
                 # Baseline - cold start generation
@@ -204,12 +258,22 @@ IMPORTANT: Output ONLY the SQL query in a code block.
                 except:
                     pass
                 
+                # Track memory
+                mem_start = get_memory_stats()
+                peak_ram = mem_start["ram_mb"]
+                peak_mps = mem_start.get("mps_allocated_mb", 0)
+                
                 thread = Thread(target=self.model.generate, kwargs=gen_kwargs)
                 thread.start()
                 
                 first_token_sent = False
                 accumulated_output = ""
                 for new_text in streamer:
+                    # Sample memory
+                    mem_now = get_memory_stats()
+                    peak_ram = max(peak_ram, mem_now["ram_mb"])
+                    peak_mps = max(peak_mps, mem_now.get("mps_allocated_mb", 0))
+                    
                     accumulated_output += new_text
                     
                     if not first_token_sent:
@@ -224,7 +288,11 @@ IMPORTANT: Output ONLY the SQL query in a code block.
                     if "```" in accumulated_output:
                         break
                 
-                await websocket.send(json.dumps({"event": "generation_complete"}))
+                await websocket.send(json.dumps({
+                    "event": "generation_complete",
+                    "peak_ram_mb": round(peak_ram, 1),
+                    "peak_mps_mb": round(peak_mps, 1)
+                }))
         
         elif msg_type == "generate_report":
             # Generate markdown report
@@ -251,6 +319,12 @@ IMPORTANT: Output ONLY the SQL query in a code block.
         improvement = ((base_avg - ant_avg) / base_avg * 100) if base_avg > 0 else 0
         speedup = base_avg / ant_avg if ant_avg > 0 else 0
         
+        # Memory averages
+        ant_ram = sum(r.get("peak_ram_mb", 0) for r in ant) / len(ant) if ant else 0
+        base_ram = sum(r.get("peak_ram_mb", 0) for r in base) / len(base) if base else 0
+        ant_mps = sum(r.get("peak_mps_mb", 0) for r in ant) / len(ant) if ant else 0
+        base_mps = sum(r.get("peak_mps_mb", 0) for r in base) / len(base) if base else 0
+        
         content = f"""# E2E Evaluation Report (Client-Side Metrics)
 
 **Model**: {self.model_name}  
@@ -264,17 +338,26 @@ IMPORTANT: Output ONLY the SQL query in a code block.
 | **Avg TTFT** | {ant_avg:.0f} ms | {base_avg:.0f} ms | **{speedup:.1f}x** |
 | **Improvement** | - | - | **{improvement:.1f}%** |
 
+## Memory Usage
+
+| Metric | Anticipatory | Baseline |
+|--------|--------------|----------|
+| **Avg Peak RAM** | {ant_ram:.1f} MB | {base_ram:.1f} MB |
+| **Avg Peak MPS** | {ant_mps:.1f} MB | {base_mps:.1f} MB |
+
 > Note: These metrics are measured client-side (browser) and include network latency.
 
 ## Per-Question Results
 
-| Question | Anticipatory TTFT | Baseline TTFT | Speedup |
-|----------|-------------------|---------------|---------|
+| Question | Ant. TTFT | Base. TTFT | Speedup | Ant. RAM | Base. RAM |
+|----------|-----------|------------|---------|----------|-----------|
 """
         for i, a in enumerate(ant):
-            b = base[i] if i < len(base) else {"ttft": 0}
+            b = base[i] if i < len(base) else {"ttft": 0, "peak_ram_mb": 0}
             spd = b["ttft"] / a["ttft"] if a["ttft"] > 0 else 0
-            content += f"| {a['question_id']} | {a['ttft']} ms | {b['ttft']} ms | {spd:.1f}x |\n"
+            a_ram = a.get("peak_ram_mb", 0)
+            b_ram = b.get("peak_ram_mb", 0)
+            content += f"| {a['question_id']} | {a['ttft']} ms | {b['ttft']} ms | {spd:.1f}x | {a_ram} MB | {b_ram} MB |\n"
         
         content += "\n*Generated by OT1-APITS E2E Evaluation Dashboard*\n"
         

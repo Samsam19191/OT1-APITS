@@ -349,6 +349,14 @@
                     <div class="metric-value improvement" id="speedup">-</div>
                     <div class="metric-label">Speedup</div>
                 </div>
+                <div class="metric-item">
+                    <div class="metric-value" id="currentRam">-</div>
+                    <div class="metric-label">Peak RAM (MB)</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value" id="currentMps">-</div>
+                    <div class="metric-label">Peak MPS (MB)</div>
+                </div>
             </div>
         </div>
 
@@ -382,7 +390,8 @@
             currentIdx: 0,
             typingSpeed: 100,
             submitTime: null,
-            results: { anticipatory: [], baseline: [] }
+            results: { anticipatory: [], baseline: [] },
+            currentMemory: { ram: 0, mps: 0 }
         };
 
         // DOM
@@ -403,6 +412,8 @@
         const resultsPanel = $('resultsPanel');
         const resultsBody = $('resultsBody');
         const reportPath = $('reportPath');
+        const currentRam = $('currentRam');
+        const currentMps = $('currentMps');
 
         function connect() {
             ws = new WebSocket(WS_URL);
@@ -448,6 +459,17 @@
                     break;
 
                 case 'generation_complete':
+                    // Capture memory metrics from server
+                    if (data.peak_ram_mb !== undefined) {
+                        currentRam.textContent = data.peak_ram_mb;
+                        currentMps.textContent = data.peak_mps_mb || 0;
+                        // Store in results
+                        const lastResult = evalState.results[evalState.mode];
+                        if (lastResult.length > 0) {
+                            lastResult[lastResult.length - 1].peak_ram_mb = data.peak_ram_mb;
+                            lastResult[lastResult.length - 1].peak_mps_mb = data.peak_mps_mb || 0;
+                        }
+                    }
                     // Move to next question after short delay
                     setTimeout(() => {
                         evalState.currentIdx++;
@@ -457,6 +479,15 @@
 
                 case 'report_saved':
                     reportPath.textContent = data.path;
+                    break;
+
+                case 'cleanup_complete':
+                    // Memory cleaned up, now start baseline
+                    evalState.mode = 'baseline';
+                    evalState.currentIdx = 0;
+                    liveTitle.textContent = 'Baseline Mode (Cold Start)';
+                    progressLabel.textContent = 'Starting baseline evaluation...';
+                    runNextQuestion();
                     break;
             }
         }
@@ -484,13 +515,12 @@
             // Check if we need to switch modes
             if (evalState.currentIdx >= evalState.questions.length) {
                 if (evalState.mode === 'anticipatory') {
-                    // Switch to baseline
-                    evalState.mode = 'baseline';
-                    evalState.currentIdx = 0;
-                    liveTitle.textContent = 'Baseline Mode (Cold Start)';
-                    progressLabel.textContent = 'Starting baseline evaluation...';
-                    runNextQuestion();
-                    return;
+                    // Switch to baseline - request cleanup first
+                    evalState.mode = 'switching';
+                    liveTitle.textContent = 'Cleaning up memory...';
+                    progressLabel.textContent = 'Preparing for baseline evaluation...';
+                    ws.send(JSON.stringify({ type: 'cleanup_for_baseline' }));
+                    return; // Wait for cleanup_complete event
                 } else {
                     // Done!
                     finishEval();

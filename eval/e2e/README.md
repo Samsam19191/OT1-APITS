@@ -6,11 +6,11 @@ Web-based evaluation dashboard for comparing Anticipatory Prefill vs Cold Start 
 
 1. **Start the WebSocket server:**
    ```bash
-   .venv/bin/python demo/server.py
+   .venv/bin/python eval/e2e/server.py
    ```
 
 2. **Open the dashboard:**
-   Open `demo/index.html` in your browser (double-click or drag to browser).
+   Open `eval/e2e/index.html` in your browser (double-click or drag to browser).
 
 3. **Configure and run:**
    - Select model, database, and number of questions
