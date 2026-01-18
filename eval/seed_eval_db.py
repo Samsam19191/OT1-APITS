@@ -245,9 +245,6 @@ def seed_all(force: bool = False):
         return
 
     for db in DATABASES:
-        # migrate_database(db, pg_conn, force) # Skip migration if only updating metadata? 
-        # User requested to just add FKs, but let's keep it robust.
-        # If force is False, migration skips existing tables anyway.
         migrate_database(db, pg_conn, force)
         update_metadata_with_fks(db)
         

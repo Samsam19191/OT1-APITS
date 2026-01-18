@@ -38,29 +38,37 @@ from schema_loader import SchemaLoader
 class SQLGenerator:
     """SQL generator using production KVCacheManager."""
     
-    def __init__(self, model_name: str = "Qwen/Qwen2.5-Coder-3B-Instruct", schema: str = "", verbose: bool = False):
+    def __init__(self, model_name: str = "Qwen/Qwen2.5-Coder-3B-Instruct", schema: str = "", verbose: bool = False, use_baseline: bool = False):
         self.model_name = model_name
         self.schema = schema
         self.verbose = verbose
+        self.use_baseline = use_baseline
         self.cache_manager = None
         self._loaded = False
+        self.model = None
+        self.tokenizer = None
     
     def load(self):
         if self._loaded:
             return
         
         print(f"Loading model: {self.model_name}...")
-        model, tokenizer, device = load_model_and_tokenizer(self.model_name)
+        self.model, self.tokenizer, self.device = load_model_and_tokenizer(self.model_name)
         
-        self.cache_manager = KVCacheManager(
-            model=model,
-            tokenizer=tokenizer,
-            device=device,
-            verbose=self.verbose
-        )
+        if not self.use_baseline:
+            self.cache_manager = KVCacheManager(
+                model=self.model,
+                tokenizer=self.tokenizer,
+                device=self.device,
+                verbose=self.verbose
+            )
+        else:
+             print("[Baseline] Using Standard Hugging Face Generation (No KV Manager)")
+
+        self._loaded = True
         
         self._loaded = True
-        print(f"Model loaded on {device}")
+        print(f"Model loaded on {self.device}")
     
     async def generate(self, question: str, max_tokens: int = 256, schema: str = None) -> str:
         if not self._loaded:
@@ -73,6 +81,35 @@ class SQLGenerator:
         if self.verbose:
             print("Prompt:", prompt[:100] + "...") # Log briefly
         
+        if self.use_baseline:
+            # Standard HF Generation
+            inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
+            
+            # Standard HF Generation
+            inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
+            
+            try:
+                # Attempt to use stop_strings if supported (allows early stopping like KVCache)
+                outputs = self.model.generate(
+                    **inputs, 
+                    max_new_tokens=max_tokens, 
+                    do_sample=False,
+                    pad_token_id=self.tokenizer.eos_token_id,
+                    stop_strings=["```"],
+                    tokenizer=self.tokenizer
+                )
+            except TypeError:
+                outputs = self.model.generate(
+                    **inputs,
+                    max_new_tokens=max_tokens,
+                    do_sample=False,
+                    pad_token_id=self.tokenizer.eos_token_id
+                )
+
+            # Decode only new tokens
+            decoded = self.tokenizer.decode(outputs[0][inputs.input_ids.shape[1]:], skip_special_tokens=True)
+            return self._extract_sql(decoded)
+
         # Use production cache manager
         await self.cache_manager.initialize(prompt)
         
@@ -160,44 +197,11 @@ def load_questions(limit: int = None, db_filter: str = None):
     
     return all_questions
 
-
-async def run_eval(limit: int = None, model_name: str = "Qwen/Qwen2.5-Coder-1.5B-Instruct", db: str = None):
-    """Run evaluation."""
-    print("=" * 60)
-    print("SQL Correctness Evaluation")
-    print("=" * 60)
-    
-    # Setup
-    print("\n📦 Connecting to PostgreSQL...")
-    executor = SQLExecutor()
-    test = executor.execute("SELECT 1")
-    if not test.success:
-        print(f"❌ PostgreSQL failed: {test.error}")
-        print("Run: docker-compose -f docker-compose.eval.yml up -d")
-        return
-    print("✅ Connected")
-    
-    # Load schema loader
-    schema_loader = SchemaLoader(Path(__file__).parent / "data")
-
-    # Load model
-    generator = SQLGenerator(model_name, verbose=False)
-    generator.load()
-    print("✅ Model loaded successfully.")
-    
-    # Load questions
-    print(f"\n📋 Loading questions from all databases...")
-    questions = load_questions(limit, db)
-    print(f"Loaded {len(questions)} cases.")
-    
-    if not questions:
-        print("No questions found!")
-        return
-
-    # Results tracking
+async def evaluate_batch(generator, questions, executor, schema_loader, desc="Evaluating"):
+    """Run evaluation loop for a given generator and set of questions."""
     metrics_collector = MetricsCollector()
     
-    print(f"\n🚀 Starting evaluation of {len(questions)} questions...")
+    print(f"\n🚀 {desc}: {len(questions)} questions...")
     print("-" * 60)
     
     start_time = time.time()
@@ -205,7 +209,7 @@ async def run_eval(limit: int = None, model_name: str = "Qwen/Qwen2.5-Coder-1.5B
     # Use tqdm for progress bar
     try:
         from tqdm import tqdm
-        iterator = tqdm(enumerate(questions), total=len(questions), desc="Evaluating", file=sys.stdout)
+        iterator = tqdm(enumerate(questions), total=len(questions), desc=desc, file=sys.stdout)
     except ImportError:
         iterator = enumerate(questions)
         print("Note: tqdm not found, using simple print.")
@@ -232,6 +236,7 @@ async def run_eval(limit: int = None, model_name: str = "Qwen/Qwen2.5-Coder-1.5B
             continue
 
         # Generate SQL
+        gen_start = time.time()
         try:
             pred_sql = await generator.generate(question, schema=prompt_schema)
         except Exception as e:
@@ -241,6 +246,7 @@ async def run_eval(limit: int = None, model_name: str = "Qwen/Qwen2.5-Coder-1.5B
             else:
                 print(msg)
             pred_sql = f"-- ERROR: {e}"
+        gen_time_ms = (time.time() - gen_start) * 1000
 
         # Execute & Compare
         gold_sql_pg = gold_sql.replace('"', "'")
@@ -262,7 +268,8 @@ async def run_eval(limit: int = None, model_name: str = "Qwen/Qwen2.5-Coder-1.5B
             syntax_error=res_pred.error,
             result_match=match,
             gold_row_count=res_gold.row_count if res_gold.success else 0,
-            predicted_row_count=res_pred.row_count
+            predicted_row_count=res_pred.row_count,
+            generation_time_ms=gen_time_ms
         )
         metrics_collector.add(result)
         
@@ -273,25 +280,98 @@ async def run_eval(limit: int = None, model_name: str = "Qwen/Qwen2.5-Coder-1.5B
         log_msg = f"[{i+1:3d}/{len(questions)}] {status} {q_id}"
         if hasattr(iterator, "write"):
              iterator.write(log_msg)
-             # Optionally update description?
-             # iterator.set_description(f"Eval {q_id}: {status}")
         else:
              print(log_msg)
     
     elapsed = time.time() - start_time
-    executor.close()
-    
-    # Results
     metrics = metrics_collector.compute()
     
+    return metrics, metrics_collector.results, elapsed
+
+
+async def run_eval(limit: int = None, model_name: str = "Qwen/Qwen2.5-Coder-1.5B-Instruct", db: str = None, baseline: bool = False):
+    """Run evaluation."""
+    print("=" * 60)
+    print("SQL Correctness Evaluation")
+    print("=" * 60)
+    
+    # Setup
+    print("\n📦 Connecting to PostgreSQL...")
+    executor = SQLExecutor()
+    test = executor.execute("SELECT 1")
+    if not test.success:
+        print(f"❌ PostgreSQL failed: {test.error}")
+        print("Run: docker-compose -f docker-compose.eval.yml up -d")
+        return
+    print("✅ Connected")
+    
+    # Load schema loader
+    schema_loader = SchemaLoader(Path(__file__).parent / "data")
+
+    # Load model (Main Generator)
+    generator = SQLGenerator(model_name, verbose=False, use_baseline=False)
+    generator.load()
+    print(f"✅ Model loaded successfully (KV Cache).")
+    
+    # Load questions
+    print(f"\n📋 Loading questions from all databases...")
+    questions = load_questions(limit, db)
+    print(f"Loaded {len(questions)} cases.")
+    
+    if not questions:
+        print("No questions found!")
+        return
+
+    # --- Run Main Eval ---
+    metrics, results, elapsed = await evaluate_batch(generator, questions, executor, schema_loader, desc="Evaluating (KVCache)")
+    
     print("-" * 60)
-    print(f"\n📊 Results:")
+    print(f"\n📊 Results (KVCache):")
     print(f"   Execution Accuracy: {metrics.execution_accuracy:.1f}%")
     print(f"   Exact Match:        {metrics.exact_match_accuracy:.1f}%")
-    print(f"   Time: {elapsed:.1f}s ({elapsed/len(questions):.2f}s per query)")
+    print(f"   Avg Inference Time: {metrics.avg_inference_time_ms:.1f} ms")
+    print(f"   Total Time: {elapsed:.1f}s ({elapsed/len(questions):.2f}s per query)")
+
+    # --- Run Baseline Eval (Optional) ---
+    baseline_metrics = None
+    baseline_elapsed = 0.0
+    
+    if baseline:
+        print("\n" + "=" * 60)
+        print("🔄 Running Baseline Check (Standard HF Generation)...")
+        print("=" * 60)
+        
+        # Create baseline generator (reuses SAME loaded model to save RAM)
+        baseline_gen = SQLGenerator(model_name, verbose=False, use_baseline=True)
+        baseline_gen.model = generator.model
+        baseline_gen.tokenizer = generator.tokenizer
+        baseline_gen.device = generator.device
+        baseline_gen._loaded = True
+        
+        baseline_metrics, _, baseline_elapsed = await evaluate_batch(baseline_gen, questions, executor, schema_loader, desc="Evaluating (Baseline)")
+        
+        print(f"\n📊 Results (Baseline):")
+        print(f"   Execution Accuracy: {baseline_metrics.execution_accuracy:.1f}%")
+        print(f"   Exact Match:        {baseline_metrics.exact_match_accuracy:.1f}%")
+        print(f"   Avg Inference Time: {baseline_metrics.avg_inference_time_ms:.1f} ms")
+        print(f"   Total Time: {baseline_elapsed:.1f}s ({baseline_elapsed/len(questions):.2f}s per query)")
+        
+    executor.close()
     
     # Report
-    report_path = generate_report(metrics, metrics_collector.results)
+    report_path = generate_report(metrics, results)
+    
+    # Append Baseline Metrics if available
+    if baseline_metrics:
+        with open(report_path, "a") as f:
+            f.write(f"\n\n## Baseline Comparison (Standard HF Generate)\n")
+            f.write(f"| Metric | KV Cache | Baseline |\n")
+            f.write(f"|---|---|---|\n")
+            f.write(f"| Execution Acc | {metrics.execution_accuracy:.1f}% | {baseline_metrics.execution_accuracy:.1f}% |\n")
+            f.write(f"| Exact Match | {metrics.exact_match_accuracy:.1f}% | {baseline_metrics.exact_match_accuracy:.1f}% |\n")
+            f.write(f"| Avg Inf Time | {metrics.avg_inference_time_ms:.1f}ms | {baseline_metrics.avg_inference_time_ms:.1f}ms |\n")
+            f.write(f"| Total Time | {elapsed:.1f}s | {baseline_elapsed:.1f}s |\n")
+
     print(f"\n📄 Report: {report_path}")
     
     return report_path
@@ -301,9 +381,10 @@ def main():
     parser.add_argument("--limit", "-n", type=int, default=None, help="Limit number of questions (default: all)")
     parser.add_argument("--model", "-m", type=str, default="Qwen/Qwen2.5-Coder-1.5B-Instruct")
     parser.add_argument("--db", type=str, help="Filter by database ID (e.g. car_1)")
+    parser.add_argument("--baseline", action="store_true", help="Run baseline comparison using standard HF generation")
     args = parser.parse_args()
     
-    asyncio.run(run_eval(limit=args.limit, model_name=args.model, db=args.db))
+    asyncio.run(run_eval(limit=args.limit, model_name=args.model, db=args.db, baseline=args.baseline))
 
 if __name__ == "__main__":
     main()

@@ -38,6 +38,8 @@ class Metrics:
     model_name: str = ""
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
     
+    avg_inference_time_ms: float = 0.0
+    
     @property
     def execution_accuracy(self) -> float:
         """% of queries that execute without error."""
@@ -65,11 +67,21 @@ class MetricsCollector:
             total=len(self.results)
         )
         
+        total_time = 0.0
+        count_time = 0
+        
         for r in self.results:
             if r.syntax_valid:
                 metrics.syntax_valid += 1
             if r.result_match:
                 metrics.result_match += 1
+            
+            if r.generation_time_ms is not None:
+                total_time += r.generation_time_ms
+                count_time += 1
+        
+        if count_time > 0:
+            metrics.avg_inference_time_ms = total_time / count_time
         
         return metrics
     
