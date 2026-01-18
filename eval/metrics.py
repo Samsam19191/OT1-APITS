@@ -23,6 +23,7 @@ class EvalResult:
     predicted_row_count: int = 0
     
     generation_time_ms: Optional[float] = None
+    ttft_ms: Optional[float] = None
     
     def is_correct(self) -> bool:
         return self.syntax_valid and self.result_match
@@ -39,6 +40,7 @@ class Metrics:
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
     
     avg_inference_time_ms: float = 0.0
+    avg_ttft_ms: float = 0.0
     
     @property
     def execution_accuracy(self) -> float:
@@ -70,6 +72,9 @@ class MetricsCollector:
         total_time = 0.0
         count_time = 0
         
+        total_ttft = 0.0
+        count_ttft = 0
+        
         for r in self.results:
             if r.syntax_valid:
                 metrics.syntax_valid += 1
@@ -79,9 +84,16 @@ class MetricsCollector:
             if r.generation_time_ms is not None:
                 total_time += r.generation_time_ms
                 count_time += 1
+            
+            if r.ttft_ms is not None:
+                total_ttft += r.ttft_ms
+                count_ttft += 1
         
         if count_time > 0:
             metrics.avg_inference_time_ms = total_time / count_time
+        
+        if count_ttft > 0:
+            metrics.avg_ttft_ms = total_ttft / count_ttft
         
         return metrics
     

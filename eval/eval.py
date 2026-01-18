@@ -14,6 +14,9 @@ import sys
 import os
 import time
 from pathlib import Path
+from typing import Tuple
+from threading import Thread
+from transformers import TextIteratorStreamer
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -70,7 +73,7 @@ class SQLGenerator:
         self._loaded = True
         print(f"Model loaded on {self.device}")
     
-    async def generate(self, question: str, max_tokens: int = 256, schema: str = None) -> str:
+    async def generate(self, question: str, max_tokens: int = 256, schema: str = None) -> Tuple[str, float]:
         if not self._loaded:
             self.load()
         
@@ -82,48 +85,69 @@ class SQLGenerator:
             print("Prompt:", prompt[:100] + "...") # Log briefly
         
         if self.use_baseline:
-            # Standard HF Generation
+            # Standard HF Generation (Streaming for TTFT measurement)
             inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
+            streamer = TextIteratorStreamer(self.tokenizer, skip_prompt=True, skip_special_tokens=True)
             
-            # Standard HF Generation
-            inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
+            gen_kwargs = dict(
+                inputs,
+                streamer=streamer,
+                max_new_tokens=max_tokens,
+                do_sample=False,
+                pad_token_id=self.tokenizer.eos_token_id,
+            )
             
+            # Add stop_strings for early stopping
             try:
-                # Attempt to use stop_strings if supported (allows early stopping like KVCache)
-                outputs = self.model.generate(
-                    **inputs, 
-                    max_new_tokens=max_tokens, 
-                    do_sample=False,
-                    pad_token_id=self.tokenizer.eos_token_id,
-                    stop_strings=["```"],
-                    tokenizer=self.tokenizer
-                )
-            except TypeError:
-                outputs = self.model.generate(
-                    **inputs,
-                    max_new_tokens=max_tokens,
-                    do_sample=False,
-                    pad_token_id=self.tokenizer.eos_token_id
-                )
+                 gen_kwargs["stop_strings"] = ["```"]
+                 gen_kwargs["tokenizer"] = self.tokenizer
+            except:
+                pass
 
-            # Decode only new tokens
-            decoded = self.tokenizer.decode(outputs[0][inputs.input_ids.shape[1]:], skip_special_tokens=True)
-            return self._extract_sql(decoded)
+            thread = Thread(target=self.model.generate, kwargs=gen_kwargs)
+            thread.start()
+            
+            start_baseline = time.time()
+            generated_text = ""
+            ttft_ms = None
+            
+            for new_text in streamer:
+                if ttft_ms is None:
+                    ttft_ms = (time.time() - start_baseline) * 1000
+                generated_text += new_text
+            
+            # If generation was instant (no stream yields?), fallback
+            if ttft_ms is None:
+                ttft_ms = (time.time() - start_baseline) * 1000
+                
+            return self._extract_sql(generated_text), ttft_ms
 
         # Use production cache manager
         await self.cache_manager.initialize(prompt)
         
         output = ""
+        first_token_time = None
+        start_gen = time.time()
+        
         async for token in self.cache_manager.generate(max_new_tokens=max_tokens):
+            if first_token_time is None:
+                first_token_time = time.time()
+            
             output += token
             # STOP Condition: If we see the closing code block, stop.
             if "```" in output:
                 break
         
+        # Calculate TTFT
+        if first_token_time:
+            ttft_ms = (first_token_time - start_gen) * 1000
+        else:
+            ttft_ms = 0.0 # Should not happen if generation works
+        
         # Reset for next query
         self.cache_manager.is_first_session = True
         
-        return self._extract_sql(output)
+        return self._extract_sql(output), ttft_ms
     
     def _build_prompt(self, question: str, schema: str) -> str:
         return f"""You are an expert SQL assistant. Generate a SQL query for the question.
@@ -237,8 +261,9 @@ async def evaluate_batch(generator, questions, executor, schema_loader, desc="Ev
 
         # Generate SQL
         gen_start = time.time()
+        ttft_ms = 0.0
         try:
-            pred_sql = await generator.generate(question, schema=prompt_schema)
+            pred_sql, ttft_ms = await generator.generate(question, schema=prompt_schema)
         except Exception as e:
             msg = f"⚠️ Generation failed: {e}"
             if hasattr(iterator, "write"):
@@ -269,7 +294,8 @@ async def evaluate_batch(generator, questions, executor, schema_loader, desc="Ev
             result_match=match,
             gold_row_count=res_gold.row_count if res_gold.success else 0,
             predicted_row_count=res_pred.row_count,
-            generation_time_ms=gen_time_ms
+            generation_time_ms=gen_time_ms,
+            ttft_ms=ttft_ms
         )
         metrics_collector.add(result)
         
@@ -330,6 +356,7 @@ async def run_eval(limit: int = None, model_name: str = "Qwen/Qwen2.5-Coder-1.5B
     print(f"   Execution Accuracy: {metrics.execution_accuracy:.1f}%")
     print(f"   Exact Match:        {metrics.exact_match_accuracy:.1f}%")
     print(f"   Avg Inference Time: {metrics.avg_inference_time_ms:.1f} ms")
+    print(f"   Avg TTFT:           {metrics.avg_ttft_ms:.1f} ms")
     print(f"   Total Time: {elapsed:.1f}s ({elapsed/len(questions):.2f}s per query)")
 
     # --- Run Baseline Eval (Optional) ---
@@ -354,6 +381,7 @@ async def run_eval(limit: int = None, model_name: str = "Qwen/Qwen2.5-Coder-1.5B
         print(f"   Execution Accuracy: {baseline_metrics.execution_accuracy:.1f}%")
         print(f"   Exact Match:        {baseline_metrics.exact_match_accuracy:.1f}%")
         print(f"   Avg Inference Time: {baseline_metrics.avg_inference_time_ms:.1f} ms")
+        print(f"   Avg TTFT:           {baseline_metrics.avg_ttft_ms:.1f} ms")
         print(f"   Total Time: {baseline_elapsed:.1f}s ({baseline_elapsed/len(questions):.2f}s per query)")
         
     executor.close()
@@ -365,11 +393,12 @@ async def run_eval(limit: int = None, model_name: str = "Qwen/Qwen2.5-Coder-1.5B
     if baseline_metrics:
         with open(report_path, "a") as f:
             f.write(f"\n\n## Baseline Comparison (Standard HF Generate)\n")
-            f.write(f"| Metric | KV Cache | Baseline |\n")
+            f.write(f"| Metric | KV Cache (Theirs) | Baseline (Native) |\n")
             f.write(f"|---|---|---|\n")
             f.write(f"| Execution Acc | {metrics.execution_accuracy:.1f}% | {baseline_metrics.execution_accuracy:.1f}% |\n")
             f.write(f"| Exact Match | {metrics.exact_match_accuracy:.1f}% | {baseline_metrics.exact_match_accuracy:.1f}% |\n")
             f.write(f"| Avg Inf Time | {metrics.avg_inference_time_ms:.1f}ms | {baseline_metrics.avg_inference_time_ms:.1f}ms |\n")
+            f.write(f"| Avg TTFT | {metrics.avg_ttft_ms:.1f}ms | {baseline_metrics.avg_ttft_ms:.1f}ms |\n")
             f.write(f"| Total Time | {elapsed:.1f}s | {baseline_elapsed:.1f}s |\n")
 
     print(f"\n📄 Report: {report_path}")

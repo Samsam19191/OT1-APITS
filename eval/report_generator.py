@@ -57,6 +57,7 @@ def _build_report(metrics: Metrics, results: List[EvalResult]) -> str:
 | Execution Accuracy | {metrics.execution_accuracy:.1f}% |
 | Exact Match Accuracy | {metrics.exact_match_accuracy:.1f}% |
 | Avg Inference Time | {metrics.avg_inference_time_ms:.2f} ms |
+| Avg TTFT | {metrics.avg_ttft_ms:.2f} ms |
 
 - ✅ {metrics.result_match} correct
 - ⚠️ {len(wrong_results)} wrong results  
