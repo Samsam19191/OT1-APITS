@@ -1,0 +1,422 @@
+[
+  {
+    "id": "cre_Doc_Template_Mgt_297",
+    "question": "How many documents do we have?",
+    "gold_query": "SELECT count(*) FROM Documents"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_298",
+    "question": "Count the number of documents.",
+    "gold_query": "SELECT count(*) FROM Documents"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_299",
+    "question": "List document IDs, document names, and document descriptions for all documents.",
+    "gold_query": "SELECT document_id ,  document_name ,  document_description FROM Documents"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_300",
+    "question": "What are the ids, names, and descriptions for all documents?",
+    "gold_query": "SELECT document_id ,  document_name ,  document_description FROM Documents"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_301",
+    "question": "What is the document name and template id for document with description with the letter 'w' in it?",
+    "gold_query": "SELECT document_name ,  template_id FROM Documents WHERE Document_Description LIKE \"%w%\""
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_302",
+    "question": "Return the names and template ids for documents that contain the letter w in their description.",
+    "gold_query": "SELECT document_name ,  template_id FROM Documents WHERE Document_Description LIKE \"%w%\""
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_303",
+    "question": "What is the document id, template id and description for document named \"Robbin CV\"?",
+    "gold_query": "SELECT document_id ,  template_id ,  Document_Description FROM Documents WHERE document_name  =  \"Robbin CV\""
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_304",
+    "question": "Return the document id, template id, and description for the document with the name Robbin CV.",
+    "gold_query": "SELECT document_id ,  template_id ,  Document_Description FROM Documents WHERE document_name  =  \"Robbin CV\""
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_305",
+    "question": "How many different templates do all document use?",
+    "gold_query": "SELECT count(DISTINCT template_id) FROM Documents"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_306",
+    "question": "Count the number of different templates used for documents.",
+    "gold_query": "SELECT count(DISTINCT template_id) FROM Documents"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_307",
+    "question": "How many documents are using the template with type code 'PPT'?",
+    "gold_query": "SELECT count(*) FROM Documents AS T1 JOIN Templates AS T2 ON T1.Template_ID  =  T2.Template_ID WHERE T2.Template_Type_Code  =  'PPT'"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_308",
+    "question": "Count the number of documents that use the PPT template type.",
+    "gold_query": "SELECT count(*) FROM Documents AS T1 JOIN Templates AS T2 ON T1.Template_ID  =  T2.Template_ID WHERE T2.Template_Type_Code  =  'PPT'"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_309",
+    "question": "Show all template ids and number of documents using each template.",
+    "gold_query": "SELECT template_id ,  count(*) FROM Documents GROUP BY template_id"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_310",
+    "question": "What are all different template ids used for documents, and how many times were each of them used?",
+    "gold_query": "SELECT template_id ,  count(*) FROM Documents GROUP BY template_id"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_311",
+    "question": "What is the id and type code for the template used by the most documents?",
+    "gold_query": "SELECT T1.template_id ,  T2.Template_Type_Code FROM Documents AS T1 JOIN Templates AS T2 ON T1.template_id  =  T2.template_id GROUP BY T1.template_id ORDER BY count(*) DESC LIMIT 1"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_312",
+    "question": "Return the id and type code of the template that is used for the greatest number of documents.",
+    "gold_query": "SELECT T1.template_id ,  T2.Template_Type_Code FROM Documents AS T1 JOIN Templates AS T2 ON T1.template_id  =  T2.template_id GROUP BY T1.template_id ORDER BY count(*) DESC LIMIT 1"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_313",
+    "question": "Show ids for all templates that are used by more than one document.",
+    "gold_query": "SELECT template_id FROM Documents GROUP BY template_id HAVING count(*)  >  1"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_314",
+    "question": "What are the template ids of any templates used in more than a single document?",
+    "gold_query": "SELECT template_id FROM Documents GROUP BY template_id HAVING count(*)  >  1"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_315",
+    "question": "Show ids for all templates not used by any document.",
+    "gold_query": "SELECT template_id FROM Templates EXCEPT SELECT template_id FROM Documents"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_316",
+    "question": "What are the ids for templates that are not used in any documents?",
+    "gold_query": "SELECT template_id FROM Templates EXCEPT SELECT template_id FROM Documents"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_317",
+    "question": "How many templates do we have?",
+    "gold_query": "SELECT count(*) FROM Templates"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_318",
+    "question": "Count the number of templates.",
+    "gold_query": "SELECT count(*) FROM Templates"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_319",
+    "question": "Show template ids, version numbers, and template type codes for all templates.",
+    "gold_query": "SELECT template_id ,  version_number ,  template_type_code FROM Templates"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_320",
+    "question": "What are the ids, version numbers, and type codes for each template?",
+    "gold_query": "SELECT template_id ,  version_number ,  template_type_code FROM Templates"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_321",
+    "question": "Show all distinct template type codes for all templates.",
+    "gold_query": "SELECT DISTINCT template_type_code FROM Templates"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_322",
+    "question": "What are the different template type codes?",
+    "gold_query": "SELECT DISTINCT template_type_code FROM Templates"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_323",
+    "question": "What are the ids of templates with template type code PP or PPT?",
+    "gold_query": "SELECT template_id FROM Templates WHERE template_type_code  =  \"PP\" OR template_type_code  =  \"PPT\""
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_324",
+    "question": "Return the ids of templates that have the code PP or PPT.",
+    "gold_query": "SELECT template_id FROM Templates WHERE template_type_code  =  \"PP\" OR template_type_code  =  \"PPT\""
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_325",
+    "question": "How many templates have template type code CV?",
+    "gold_query": "SELECT count(*) FROM Templates WHERE template_type_code  =  \"CV\""
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_326",
+    "question": "Count the number of templates of the type CV.",
+    "gold_query": "SELECT count(*) FROM Templates WHERE template_type_code  =  \"CV\""
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_327",
+    "question": "What is the version number and template type code for the template with version number later than 5?",
+    "gold_query": "SELECT version_number ,  template_type_code FROM Templates WHERE version_number  >  5"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_328",
+    "question": "Return the version numbers and template type codes of templates with a version number greater than 5.",
+    "gold_query": "SELECT version_number ,  template_type_code FROM Templates WHERE version_number  >  5"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_329",
+    "question": "Show all template type codes and number of templates for each.",
+    "gold_query": "SELECT template_type_code ,  count(*) FROM Templates GROUP BY template_type_code"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_330",
+    "question": "What are the different template type codes, and how many templates correspond to each?",
+    "gold_query": "SELECT template_type_code ,  count(*) FROM Templates GROUP BY template_type_code"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_331",
+    "question": "Which template type code has most number of templates?",
+    "gold_query": "SELECT template_type_code FROM Templates GROUP BY template_type_code ORDER BY count(*) DESC LIMIT 1"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_332",
+    "question": "Return the type code of the template type that the most templates belong to.",
+    "gold_query": "SELECT template_type_code FROM Templates GROUP BY template_type_code ORDER BY count(*) DESC LIMIT 1"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_333",
+    "question": "Show all template type codes with less than three templates.",
+    "gold_query": "SELECT template_type_code FROM Templates GROUP BY template_type_code HAVING count(*)  <  3"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_334",
+    "question": "What are the codes of template types that have fewer than 3 templates?",
+    "gold_query": "SELECT template_type_code FROM Templates GROUP BY template_type_code HAVING count(*)  <  3"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_335",
+    "question": "What the smallest version number and its template type code?",
+    "gold_query": "SELECT min(Version_Number) ,  template_type_code FROM Templates"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_336",
+    "question": "Return the lowest version number, along with its corresponding template type code.",
+    "gold_query": "SELECT min(Version_Number) ,  template_type_code FROM Templates"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_337",
+    "question": "What is the template type code of the template used by document with the name \"Data base\"?",
+    "gold_query": "SELECT T1.template_type_code FROM Templates AS T1 JOIN Documents AS T2 ON T1.template_id  =  T2.template_id WHERE T2.document_name  =  \"Data base\""
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_338",
+    "question": "Return the template type code of the template that is used by a document named Data base.",
+    "gold_query": "SELECT T1.template_type_code FROM Templates AS T1 JOIN Documents AS T2 ON T1.template_id  =  T2.template_id WHERE T2.document_name  =  \"Data base\""
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_339",
+    "question": "Show all document names using templates with template type code BK.",
+    "gold_query": "SELECT T2.document_name FROM Templates AS T1 JOIN Documents AS T2 ON T1.template_id  =  T2.template_id WHERE T1.template_type_code  =  \"BK\""
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_340",
+    "question": "What are the names of documents that use templates with the code BK?",
+    "gold_query": "SELECT T2.document_name FROM Templates AS T1 JOIN Documents AS T2 ON T1.template_id  =  T2.template_id WHERE T1.template_type_code  =  \"BK\""
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_341",
+    "question": "Show all template type codes and the number of documents using each type.",
+    "gold_query": "SELECT T1.template_type_code ,  count(*) FROM Templates AS T1 JOIN Documents AS T2 ON T1.template_id  =  T2.template_id GROUP BY T1.template_type_code"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_342",
+    "question": "What are the different template type codes, and how many documents use each type?",
+    "gold_query": "SELECT T1.template_type_code ,  count(*) FROM Templates AS T1 JOIN Documents AS T2 ON T1.template_id  =  T2.template_id GROUP BY T1.template_type_code"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_343",
+    "question": "Which template type code is used by most number of documents?",
+    "gold_query": "SELECT T1.template_type_code FROM Templates AS T1 JOIN Documents AS T2 ON T1.template_id  =  T2.template_id GROUP BY T1.template_type_code ORDER BY count(*) DESC LIMIT 1"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_344",
+    "question": "Return the code of the template type that is most commonly used in documents.",
+    "gold_query": "SELECT T1.template_type_code FROM Templates AS T1 JOIN Documents AS T2 ON T1.template_id  =  T2.template_id GROUP BY T1.template_type_code ORDER BY count(*) DESC LIMIT 1"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_345",
+    "question": "Show all template type codes that are not used by any document.",
+    "gold_query": "SELECT template_type_code FROM Templates EXCEPT SELECT template_type_code FROM Templates AS T1 JOIN Documents AS T2 ON T1.template_id  =  T2.template_id"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_346",
+    "question": "What are the codes of template types that are not used for any document?",
+    "gold_query": "SELECT template_type_code FROM Templates EXCEPT SELECT template_type_code FROM Templates AS T1 JOIN Documents AS T2 ON T1.template_id  =  T2.template_id"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_347",
+    "question": "Show all template type codes and descriptions.",
+    "gold_query": "SELECT template_type_code ,  template_type_description FROM Ref_template_types"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_348",
+    "question": "What are the type codes and descriptions for all template types?",
+    "gold_query": "SELECT template_type_code ,  template_type_description FROM Ref_template_types"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_349",
+    "question": "What is the template type descriptions for template type code \"AD\".",
+    "gold_query": "SELECT template_type_description FROM Ref_template_types WHERE template_type_code  =  \"AD\""
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_350",
+    "question": "Return the template type description of the template type with the code AD.",
+    "gold_query": "SELECT template_type_description FROM Ref_template_types WHERE template_type_code  =  \"AD\""
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_351",
+    "question": "What is the template type code for template type description \"Book\".",
+    "gold_query": "SELECT template_type_code FROM Ref_template_types WHERE template_type_description  =  \"Book\""
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_352",
+    "question": "Return the type code of the template type with the description \"Book\".",
+    "gold_query": "SELECT template_type_code FROM Ref_template_types WHERE template_type_description  =  \"Book\""
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_353",
+    "question": "What are the distinct template type descriptions for the templates ever used by any document?",
+    "gold_query": "SELECT DISTINCT T1.template_type_description FROM Ref_template_types AS T1 JOIN Templates AS T2 ON T1.template_type_code  = T2.template_type_code JOIN Documents AS T3 ON T2.Template_ID  =  T3.template_ID"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_354",
+    "question": "Return the different descriptions for templates that have been used in a document.",
+    "gold_query": "SELECT DISTINCT T1.template_type_description FROM Ref_template_types AS T1 JOIN Templates AS T2 ON T1.template_type_code  = T2.template_type_code JOIN Documents AS T3 ON T2.Template_ID  =  T3.template_ID"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_355",
+    "question": "What are the template ids with template type description \"Presentation\".",
+    "gold_query": "SELECT T2.template_id FROM Ref_template_types AS T1 JOIN Templates AS T2 ON T1.template_type_code  = T2.template_type_code WHERE T1.template_type_description  =  \"Presentation\""
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_356",
+    "question": "Return the ids corresponding to templates with the description 'Presentation'.",
+    "gold_query": "SELECT T2.template_id FROM Ref_template_types AS T1 JOIN Templates AS T2 ON T1.template_type_code  = T2.template_type_code WHERE T1.template_type_description  =  \"Presentation\""
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_357",
+    "question": "How many paragraphs in total?",
+    "gold_query": "SELECT count(*) FROM Paragraphs"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_358",
+    "question": "Count the number of paragraphs.",
+    "gold_query": "SELECT count(*) FROM Paragraphs"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_359",
+    "question": "How many paragraphs for the document with name 'Summer Show'?",
+    "gold_query": "SELECT count(*) FROM Paragraphs AS T1 JOIN Documents AS T2 ON T1.document_ID  =  T2.document_ID WHERE T2.document_name  =  'Summer Show'"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_360",
+    "question": "Count the number of paragraphs in the document named 'Summer Show'.",
+    "gold_query": "SELECT count(*) FROM Paragraphs AS T1 JOIN Documents AS T2 ON T1.document_ID  =  T2.document_ID WHERE T2.document_name  =  'Summer Show'"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_361",
+    "question": "Show paragraph details for paragraph with text 'Korea'.",
+    "gold_query": "SELECT Other_Details FROM Paragraphs WHERE paragraph_text  =  'Korea'"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_362",
+    "question": "What are the details for the paragraph that includes the text 'Korea'?",
+    "gold_query": "SELECT Other_Details FROM Paragraphs WHERE paragraph_text  =  'Korea'"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_363",
+    "question": "Show all paragraph ids and texts for the document with name 'Welcome to NY'.",
+    "gold_query": "SELECT T1.paragraph_id ,   T1.paragraph_text FROM Paragraphs AS T1 JOIN Documents AS T2 ON T1.document_id  =  T2.document_id WHERE T2.Document_Name  =  'Welcome to NY'"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_364",
+    "question": "What are the ids and texts of paragraphs in the document titled 'Welcome to NY'?",
+    "gold_query": "SELECT T1.paragraph_id ,   T1.paragraph_text FROM Paragraphs AS T1 JOIN Documents AS T2 ON T1.document_id  =  T2.document_id WHERE T2.Document_Name  =  'Welcome to NY'"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_365",
+    "question": "Show all paragraph texts for the document \"Customer reviews\".",
+    "gold_query": "SELECT T1.paragraph_text FROM Paragraphs AS T1 JOIN Documents AS T2 ON T1.document_id  =  T2.document_id WHERE T2.document_name  =  \"Customer reviews\""
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_366",
+    "question": "What are the paragraph texts for the document with the name 'Customer reviews'?",
+    "gold_query": "SELECT T1.paragraph_text FROM Paragraphs AS T1 JOIN Documents AS T2 ON T1.document_id  =  T2.document_id WHERE T2.document_name  =  \"Customer reviews\""
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_367",
+    "question": "Show all document ids and the number of paragraphs in each document. Order by document id.",
+    "gold_query": "SELECT document_id ,  count(*) FROM Paragraphs GROUP BY document_id ORDER BY document_id"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_368",
+    "question": "Return the different document ids along with the number of paragraphs corresponding to each, ordered by id.",
+    "gold_query": "SELECT document_id ,  count(*) FROM Paragraphs GROUP BY document_id ORDER BY document_id"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_369",
+    "question": "Show all document ids, names and the number of paragraphs in each document.",
+    "gold_query": "SELECT T1.document_id ,  T2.document_name ,  count(*) FROM Paragraphs AS T1 JOIN Documents AS T2 ON T1.document_id  =  T2.document_id GROUP BY T1.document_id"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_370",
+    "question": "What are the ids and names of each document, as well as the number of paragraphs in each?",
+    "gold_query": "SELECT T1.document_id ,  T2.document_name ,  count(*) FROM Paragraphs AS T1 JOIN Documents AS T2 ON T1.document_id  =  T2.document_id GROUP BY T1.document_id"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_371",
+    "question": "List all document ids with at least two paragraphs.",
+    "gold_query": "SELECT document_id FROM Paragraphs GROUP BY document_id HAVING count(*)  >=  2"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_372",
+    "question": "What are the ids of documents that have 2 or more paragraphs?",
+    "gold_query": "SELECT document_id FROM Paragraphs GROUP BY document_id HAVING count(*)  >=  2"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_373",
+    "question": "What is the document id and name with greatest number of paragraphs?",
+    "gold_query": "SELECT T1.document_id ,  T2.document_name FROM Paragraphs AS T1 JOIN Documents AS T2 ON T1.document_id  =  T2.document_id GROUP BY T1.document_id ORDER BY count(*) DESC LIMIT 1"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_374",
+    "question": "Return the id and name of the document with the most paragraphs.",
+    "gold_query": "SELECT T1.document_id ,  T2.document_name FROM Paragraphs AS T1 JOIN Documents AS T2 ON T1.document_id  =  T2.document_id GROUP BY T1.document_id ORDER BY count(*) DESC LIMIT 1"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_375",
+    "question": "What is the document id with least number of paragraphs?",
+    "gold_query": "SELECT document_id FROM Paragraphs GROUP BY document_id ORDER BY count(*) ASC LIMIT 1"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_376",
+    "question": "Return the id of the document with the fewest paragraphs.",
+    "gold_query": "SELECT document_id FROM Paragraphs GROUP BY document_id ORDER BY count(*) ASC LIMIT 1"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_377",
+    "question": "What is the document id with 1 to 2 paragraphs?",
+    "gold_query": "SELECT document_id FROM Paragraphs GROUP BY document_id HAVING count(*) BETWEEN 1 AND 2"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_378",
+    "question": "Give the ids of documents that have between one and two paragraphs.",
+    "gold_query": "SELECT document_id FROM Paragraphs GROUP BY document_id HAVING count(*) BETWEEN 1 AND 2"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_379",
+    "question": "Show the document id with paragraph text 'Brazil' and 'Ireland'.",
+    "gold_query": "SELECT document_id FROM Paragraphs WHERE paragraph_text  =  'Brazil' INTERSECT SELECT document_id FROM Paragraphs WHERE paragraph_text  =  'Ireland'"
+  },
+  {
+    "id": "cre_Doc_Template_Mgt_380",
+    "question": "What are the ids of documents that contain the paragraph text 'Brazil' and 'Ireland'?",
+    "gold_query": "SELECT document_id FROM Paragraphs WHERE paragraph_text  =  'Brazil' INTERSECT SELECT document_id FROM Paragraphs WHERE paragraph_text  =  'Ireland'"
+  }
+]

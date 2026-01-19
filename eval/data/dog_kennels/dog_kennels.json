@@ -1,0 +1,424 @@
+[
+    {
+        "table": "breeds",
+        "col_data": [
+            {
+                "column_name": "breed_code",
+                "data_type": "VARCHAR(10)",
+                "primary_key": 1,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "breed_name",
+                "data_type": "VARCHAR(80)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            }
+        ]
+    },
+    {
+        "table": "charges",
+        "col_data": [
+            {
+                "column_name": "charge_id",
+                "data_type": "INTEGER",
+                "primary_key": 1,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "charge_type",
+                "data_type": "VARCHAR(10)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "charge_amount",
+                "data_type": "DECIMAL(19,4)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            }
+        ]
+    },
+    {
+        "table": "sizes",
+        "col_data": [
+            {
+                "column_name": "size_code",
+                "data_type": "VARCHAR(10)",
+                "primary_key": 1,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "size_description",
+                "data_type": "VARCHAR(80)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            }
+        ]
+    },
+    {
+        "table": "treatment_types",
+        "col_data": [
+            {
+                "column_name": "treatment_type_code",
+                "data_type": "VARCHAR(10)",
+                "primary_key": 1,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "treatment_type_description",
+                "data_type": "VARCHAR(80)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            }
+        ]
+    },
+    {
+        "table": "owners",
+        "col_data": [
+            {
+                "column_name": "owner_id",
+                "data_type": "INTEGER",
+                "primary_key": 1,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "first_name",
+                "data_type": "VARCHAR(50)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "last_name",
+                "data_type": "VARCHAR(50)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "street",
+                "data_type": "VARCHAR(50)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "city",
+                "data_type": "VARCHAR(50)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "state",
+                "data_type": "VARCHAR(20)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "zip_code",
+                "data_type": "VARCHAR(20)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "email_address",
+                "data_type": "VARCHAR(50)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "home_phone",
+                "data_type": "VARCHAR(20)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "cell_number",
+                "data_type": "VARCHAR(20)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            }
+        ]
+    },
+    {
+        "table": "dogs",
+        "col_data": [
+            {
+                "column_name": "dog_id",
+                "data_type": "INTEGER",
+                "primary_key": 1,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "owner_id",
+                "data_type": "INTEGER",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 1
+            },
+            {
+                "column_name": "abandoned_yn",
+                "data_type": "VARCHAR(1)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "breed_code",
+                "data_type": "VARCHAR(10)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 1
+            },
+            {
+                "column_name": "size_code",
+                "data_type": "VARCHAR(10)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 1
+            },
+            {
+                "column_name": "name",
+                "data_type": "VARCHAR(50)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "age",
+                "data_type": "VARCHAR(20)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "date_of_birth",
+                "data_type": "DATETIME",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "gender",
+                "data_type": "VARCHAR(1)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "weight",
+                "data_type": "VARCHAR(20)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "date_arrived",
+                "data_type": "DATETIME",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "date_adopted",
+                "data_type": "DATETIME",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "date_departed",
+                "data_type": "DATETIME",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "owner_id",
+                "ref_table": "owners",
+                "ref_column": "owner_id"
+            },
+            {
+                "column": "owner_id",
+                "ref_table": "owners",
+                "ref_column": "owner_id"
+            },
+            {
+                "column": "size_code",
+                "ref_table": "sizes",
+                "ref_column": "size_code"
+            },
+            {
+                "column": "breed_code",
+                "ref_table": "breeds",
+                "ref_column": "breed_code"
+            }
+        ]
+    },
+    {
+        "table": "professionals",
+        "col_data": [
+            {
+                "column_name": "professional_id",
+                "data_type": "INTEGER",
+                "primary_key": 1,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "role_code",
+                "data_type": "VARCHAR(10)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 1
+            },
+            {
+                "column_name": "first_name",
+                "data_type": "VARCHAR(50)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "street",
+                "data_type": "VARCHAR(50)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "city",
+                "data_type": "VARCHAR(50)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "state",
+                "data_type": "VARCHAR(20)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "zip_code",
+                "data_type": "VARCHAR(20)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "last_name",
+                "data_type": "VARCHAR(50)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "email_address",
+                "data_type": "VARCHAR(50)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "home_phone",
+                "data_type": "VARCHAR(20)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "cell_number",
+                "data_type": "VARCHAR(20)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            }
+        ]
+    },
+    {
+        "table": "treatments",
+        "col_data": [
+            {
+                "column_name": "treatment_id",
+                "data_type": "INTEGER",
+                "primary_key": 1,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "dog_id",
+                "data_type": "INTEGER",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 1
+            },
+            {
+                "column_name": "professional_id",
+                "data_type": "INTEGER",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 1
+            },
+            {
+                "column_name": "treatment_type_code",
+                "data_type": "VARCHAR(10)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 1
+            },
+            {
+                "column_name": "date_of_treatment",
+                "data_type": "DATETIME",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            },
+            {
+                "column_name": "cost_of_treatment",
+                "data_type": "DECIMAL(19,4)",
+                "primary_key": 0,
+                "default_value": null,
+                "not_null": 0
+            }
+        ],
+        "foreign_keys": [
+            {
+                "column": "dog_id",
+                "ref_table": "dogs",
+                "ref_column": "dog_id"
+            },
+            {
+                "column": "professional_id",
+                "ref_table": "professionals",
+                "ref_column": "professional_id"
+            },
+            {
+                "column": "treatment_type_code",
+                "ref_table": "treatment_types",
+                "ref_column": "treatment_type_code"
+            }
+        ]
+    }
+]

@@ -64,10 +64,11 @@ class KVCacheManager(ABC):
     Rémi will implement this with actual HF Transformers cache operations.
     """
 
-    def __init__(self, model, tokenizer, device="cuda"):
+    def __init__(self, model, tokenizer, device="cuda", verbose: bool = True):
         self.model = model
         self.tokenizer = tokenizer
         self.device = device
+        self.verbose = verbose
         self._state = CacheState()
         self.is_first_session = True
     
@@ -78,7 +79,8 @@ class KVCacheManager(ABC):
         """
 
         if self.is_first_session:
-            print(f"\n[KV] Initializing with prompt: '{base_prompt}'")
+            if self.verbose:
+                print(f"\n[KV] Initializing with prompt: '{base_prompt}'")
             self._state = CacheState()
 
             if not base_prompt:
@@ -98,9 +100,11 @@ class KVCacheManager(ABC):
             self._state.save("./cache/" + filename + ".pt")
             self.is_first_session = False
 
-            print(f"[KV] Init complete. Cache size: {self._state.confirmed_token_count} tokens.")
+            if self.verbose:
+                print(f"[KV] Init complete. Cache size: {self._state.confirmed_token_count} tokens.")
         else: 
-            print(f"[KV] CacheState already exists.Skipping initialization.")
+            if self.verbose:
+                print(f"[KV] CacheState already exists.Skipping initialization.")
 
             filename = sha256(base_prompt.encode("utf-8")).hexdigest()
             self._state = CacheState.load("./cache/" + filename + ".pt", device=self.device)
@@ -112,7 +116,8 @@ class KVCacheManager(ABC):
         Extend the KV-cache with new confirmed text.
         Follows the logic of: ids_p2 = ids_full[:, len_p1:]
         """
-        print(f"[KV] Extending cache with delta: '{new_text}'")
+        if self.verbose:
+            print(f"[KV] Extending cache with delta: '{new_text}'")
         full_text_next = self._state.confirmed_text + new_text
 
         tokens_full = self.tokenizer(full_text_next, return_tensors="pt").to(self.device)
@@ -123,7 +128,8 @@ class KVCacheManager(ABC):
         # If we added text, but the token count didn't increase (or shrank),
         # it means the tokenizer merged the previous last token with the new text.
         if current_len <= past_len and len(new_text) > 0:
-            print(f"[KV] Merge Detected (Old len: {past_len}, New len: {current_len}). Rolling back 1 token.")
+            if self.verbose:
+                print(f"[KV] Merge Detected (Old len: {past_len}, New len: {current_len}). Rolling back 1 token.")
             
             # Decrement our "safe" boundary by 1
             past_len = max(0, past_len - 1)
@@ -144,10 +150,12 @@ class KVCacheManager(ABC):
 
         input_ids_new = input_ids_full[:, past_len:]
         
-        print(f"[KV] Total: {current_len}. Cached: {past_len}. Computing: {input_ids_new.shape[1]}")
+        if self.verbose:
+            print(f"[KV] Total: {current_len}. Cached: {past_len}. Computing: {input_ids_new.shape[1]}")
 
         if input_ids_new.shape[1] == 0:
-            print("[KV] No new tokens to compute. Updating text reference only.")
+            if self.verbose:
+                print("[KV] No new tokens to compute. Updating text reference only.")
             self._state.confirmed_text = full_text_next
             return self._state
 
@@ -162,7 +170,8 @@ class KVCacheManager(ABC):
         self._state.confirmed_text = full_text_next
         self._state.confirmed_token_count = input_ids_full.shape[1]
         
-        print(f"[KV] Extend success. New cache size: {self._state.confirmed_token_count}")
+        if self.verbose:
+            print(f"[KV] Extend success. New cache size: {self._state.confirmed_token_count}")
         return self._state
         
     async def crop(self, target_text: str) -> CacheState:
@@ -212,7 +221,8 @@ class KVCacheManager(ABC):
         self._state.confirmed_text = target_text
         self._state.confirmed_token_count = target_length
         
-        print(f"[KV] Crop success. New cache size: {target_length}")
+        if self.verbose:
+            print(f"[KV] Crop success. New cache size: {target_length}")
         return self._state
     
     async def generate(
@@ -229,7 +239,8 @@ class KVCacheManager(ABC):
         3. Loop: Generates new tokens autoregressively.
         """
         text = self._state.confirmed_text
-        print(f"\n[KV] Starting GENERATION. Context: '{text}'")
+        if self.verbose:
+            print(f"\n[KV] Starting GENERATION. Context: '{text}'")
         
         if not text:
             return 
@@ -241,7 +252,8 @@ class KVCacheManager(ABC):
             yield
 
         # Backstep Logic
-        print("[KV] Performing Backstep (Rewind 1 token)...")
+        if self.verbose:
+            print("[KV] Performing Backstep (Rewind 1 token)...")
         last_token_input = all_tokens[:, -1:] 
         kv_cache = self._state.past_key_values
         
@@ -275,13 +287,15 @@ class KVCacheManager(ABC):
                 next_token_id = torch.argmax(logits, dim=-1, keepdim=True)
             
             if next_token_id.item() == self.tokenizer.eos_token_id:
-                print("[KV] EOS token detected.")
+                if self.verbose:
+                    print("[KV] EOS token detected.")
                 break
                 
             token_str = self.tokenizer.decode(next_token_id[0], skip_special_tokens=True)
             
             # Print first few tokens to verify it works
-            print(f"[KV] Gen token {i}: '{token_str}'")
+            if self.verbose:
+                print(f"[KV] Gen token {i}: '{token_str}'")
             
             yield token_str
 
@@ -292,7 +306,8 @@ class KVCacheManager(ABC):
 
         self._state.confirmed_text += generated_text_accum
         self._state.confirmed_token_count += len(self.tokenizer.encode(generated_text_accum))
-        print(f"[KV] Generation Complete. Generated '{generated_text_accum}'")
+        if self.verbose:
+            print(f"[KV] Generation Complete. Generated '{generated_text_accum}'")
 
 class StreamController:
     def __init__(
