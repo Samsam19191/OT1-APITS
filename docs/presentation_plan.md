@@ -4,7 +4,7 @@
 
 ---
 
-## 1. Introduction (2 min)
+## 1. Introduction (2 min) — `Slide 1` (Shuyan)
 
 **Objective**: Set the stage, introduce the team and topic
 
@@ -15,7 +15,7 @@
 
 ---
 
-## 2. Text-to-SQL & Industry Context (3 min)
+## 2. Text-to-SQL & Industry Context (3 min) — `Slides 2-3` (Riad)
 
 **Objective**: Explain what Text-to-SQL is and why it matters today
 
@@ -33,9 +33,14 @@
 
 ---
 
-## 3. Problem Statement (3 min)
+## 3. Problem Statement (3 min) — `Slides 4-5` (Rayan)
 
-**Objective**: Define the latency problem we're solving
+**Objective**: Define the latency problem we're solving (macro-micro-meso)
+
+### 3.0 Problem Formulation
+- **Macro**: LLM-powered Text-to-SQL systems suffer from latency issues affecting user experience
+- **Meso**: The prefill phase of LLM inference dominates Time-to-First-Token for long prompts
+- **Micro**: Typing time (3-10s) is completely wasted while the backend sits idle
 
 ### 3.1 The Latency Problem
 - State-of-the-art accuracy ✓ but **user experience suffers**
@@ -56,7 +61,7 @@
 
 ---
 
-## 4. How LLM Inference Works (4 min)
+## 4. How LLM Inference Works (4 min) — `Slides 6-8` (Rayan)
 
 **Objective**: Give audience technical foundation to understand our solution
 
@@ -86,7 +91,7 @@
 
 ---
 
-## 5. Our Solution: Anticipatory Prefill (6 min)
+## 5. Our Solution: Anticipatory Prefill (6 min) — `Slides 9-13` (Rémi)
 
 **Objective**: Explain the core innovation in detail
 
@@ -122,7 +127,7 @@
 
 ---
 
-## 6. Evaluation Framework (5 min)
+## 6. Evaluation Framework (5 min) — `Slides 14-17` (Sami)
 
 **Objective**: Explain methodology, choices, and expected outcomes
 
@@ -157,7 +162,7 @@
 
 ---
 
-## 7. Live Demo (1 min)
+## 7. Live Demo (1 min) — `Slide 18`
 
 **Objective**: Show the system working
 
@@ -168,7 +173,7 @@
 
 ---
 
-## 8. Final Results (3 min)
+## 8. Final Results (3 min) — `Slides 19-22` (Lizhi)
 
 **Objective**: Present the actual numbers from the full evaluation run
 
@@ -197,7 +202,7 @@
 
 ---
 
-## 9. Conclusion & Future Work (2 min)
+## 9. Conclusion & Future Work (2 min) — `Slides 23-26` (Shuyan)
 
 **Objective**: Wrap up, acknowledge limitations, point to extensions
 
@@ -247,4 +252,3 @@
 - **Test Cases**: 378 across 3 databases
 - **Model**: Qwen2.5-Coder-1.5B-Instruct
 - **Total Eval Time**: 1040s (vs 1170s baseline)
-

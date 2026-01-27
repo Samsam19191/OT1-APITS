@@ -503,52 +503,73 @@
         <div class="slide">
             <div class="slide-header">
                 <h1 class="slide-title">The Latency Problem</h1>
-                <p class="slide-subtitle">Great accuracy, but users wait too long</p>
+                <p class="slide-subtitle">Macro → Meso → Micro problem formulation</p>
             </div>
             <div class="content">
+                <div class="diagram" style="margin-bottom: 25px; gap: 15px;">
+                    <div class="diagram-box" style="padding: 12px 20px; font-size: 16px;">
+                        <strong style="color: #6366f1;">Macro</strong><br>
+                        <span style="color: #888;">LLM Text-to-SQL has latency issues</span>
+                    </div>
+                    <span class="arrow" style="font-size: 24px;">→</span>
+                    <div class="diagram-box" style="padding: 12px 20px; font-size: 16px;">
+                        <strong style="color: #6366f1;">Meso</strong><br>
+                        <span style="color: #888;">Prefill phase dominates TTFT</span>
+                    </div>
+                    <span class="arrow" style="font-size: 24px;">→</span>
+                    <div class="diagram-box" style="padding: 12px 20px; font-size: 16px;">
+                        <strong style="color: #6366f1;">Micro</strong><br>
+                        <span style="color: #888;">Typing time is wasted (3-10s idle)</span>
+                    </div>
+                </div>
                 <div class="two-column">
                     <div>
                         <div class="highlight-box red" style="border-left-color: #ef4444;">
                             <h4 style="color: #ef4444;">Time-To-First-Token (TTFT)</h4>
-                            <p style="color: #888; font-size: 24px;">
+                            <p style="color: #888; font-size: 22px;">
                                 Delay between pressing "Enter" and seeing the first response character.
                             </p>
-                            <p style="font-size: 32px; color: #ef4444; font-weight: 700; margin-top: 15px;">
+                            <p style="font-size: 28px; color: #ef4444; font-weight: 700; margin-top: 10px;">
                                 Typical: 300-800ms
                             </p>
                         </div>
-                        <div class="highlight-box orange" style="margin-top: 25px;">
+                        <div class="highlight-box orange" style="margin-top: 15px;">
                             <h4 style="color: #f59e0b;">Growing Complexity</h4>
-                            <ul style="color: #888; font-size: 22px; margin-top: 10px; list-style: none;">
-                                <li>• Larger schemas (more tables, columns)</li>
-                                <li>• Complex queries (JOINs, aggregations)</li>
+                            <ul style="color: #888; font-size: 20px; margin-top: 8px; list-style: none;">
+                                <li>• Larger schemas, more tokens</li>
                                 <li>• Prompt size: 500-2000+ tokens</li>
-                                <li>• More tokens = longer wait</li>
                             </ul>
                         </div>
                     </div>
                     <div>
                         <h3>The Wasted Opportunity</h3>
-                        <div class="process-step" style="border-left-color: #ef4444;">
-                            <div class="step-number" style="background: #ef4444;">1</div>
-                            <div class="step-text">User types query: <strong>3-10 seconds</strong></div>
+                        <div class="process-step" style="border-left-color: #ef4444; padding: 15px 20px;">
+                            <div class="step-number"
+                                style="background: #ef4444; width: 35px; height: 35px; font-size: 18px;">1</div>
+                            <div class="step-text" style="font-size: 20px;">User types query: <strong>3-10
+                                    seconds</strong></div>
                         </div>
-                        <div class="process-step" style="border-left-color: #ef4444;">
-                            <div class="step-number" style="background: #ef4444;">2</div>
-                            <div class="step-text">Backend sits <strong>completely idle</strong></div>
+                        <div class="process-step" style="border-left-color: #ef4444; padding: 15px 20px;">
+                            <div class="step-number"
+                                style="background: #ef4444; width: 35px; height: 35px; font-size: 18px;">2</div>
+                            <div class="step-text" style="font-size: 20px;">Backend sits <strong>completely
+                                    idle</strong></div>
                         </div>
-                        <div class="process-step" style="border-left-color: #ef4444;">
-                            <div class="step-number" style="background: #ef4444;">3</div>
-                            <div class="step-text">Only starts work <strong>after submission</strong></div>
+                        <div class="process-step" style="border-left-color: #ef4444; padding: 15px 20px;">
+                            <div class="step-number"
+                                style="background: #ef4444; width: 35px; height: 35px; font-size: 18px;">3</div>
+                            <div class="step-text" style="font-size: 20px;">Only starts work <strong>after
+                                    submission</strong></div>
                         </div>
-                        <div class="key-finding" style="margin-top: 30px;">
-                            Key Insight: Exploit typing time for computation!
+                        <div class="key-finding" style="margin-top: 20px; font-size: 22px;">
+                            Key Insight: Exploit typing time!
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
 
     <!-- SLIDE 6: Section - LLM Basics -->
     <div class="slide-container" data-slide="6">
@@ -636,17 +657,17 @@
                     </div>
                     <div>
                         <h3>Cache Structure</h3>
-                        <div class="code-block" style="font-size: 20px;">
-                            <span class="comment"># DynamicCache per layer</span>
-                            cache = DynamicCache()
+                        <div class="code-block" style="font-size: 18px;">
+                            <pre style="margin: 0; font-family: inherit;"><span class="comment"># DynamicCache per layer</span>
+cache = DynamicCache()
 
-                            <span class="comment"># After processing "Hello world"</span>
-                            cache.key[layer] → [K₁, K₂] <span class="comment"># "Hello", "world"</span>
-                            cache.value[layer] → [V₁, V₂]
+<span class="comment"># After processing "Hello world"</span>
+cache.key[layer] → [K₁, K₂]
+cache.value[layer] → [V₁, V₂]
 
-                            <span class="comment"># Add new token</span>
-                            cache.key[layer] → [K₁, K₂, K₃]
-                            cache.value[layer] → [V₁, V₂, V₃]
+<span class="comment"># Add new token</span>
+cache.key[layer] → [K₁, K₂, K₃]
+cache.value[layer] → [V₁, V₂, V₃]</pre>
                         </div>
                         <div class="key-finding" style="margin-top: 25px; font-size: 24px;">
                             The cache grows as tokens are added.<br>Our idea: grow it during typing!
@@ -820,19 +841,19 @@
                     </div>
                     <div>
                         <h3>How Crop Works</h3>
-                        <div class="code-block" style="font-size: 20px;">
-                            <span class="comment"># DynamicCache.crop() - built-in!</span>
+                        <div class="code-block" style="font-size: 18px;">
+                            <pre style="margin: 0; font-family: inherit;"><span class="comment"># DynamicCache.crop() - built-in!</span>
 
-                            <span class="comment"># Before: cache has 50 tokens</span>
-                            cache.get_seq_length() <span class="comment"># → 50</span>
+<span class="comment"># Before: cache has 50 tokens</span>
+cache.get_seq_length()  <span class="comment"># → 50</span>
 
-                            <span class="comment"># User deleted text, need 45 tokens</span>
-                            cache.crop(<span class="number">45</span>)
+<span class="comment"># User deleted text, need 45 tokens</span>
+cache.crop(<span class="number">45</span>)
 
-                            <span class="comment"># After: instant truncation</span>
-                            cache.get_seq_length() <span class="comment"># → 45</span>
+<span class="comment"># After: instant truncation</span>
+cache.get_seq_length()  <span class="comment"># → 45</span>
 
-                            <span class="comment"># Now extend from position 45</span>
+<span class="comment"># Now extend from position 45</span></pre>
                         </div>
                         <div class="key-finding" style="margin-top: 25px; font-size: 22px;">
                             Rollback is instant, just re-extend the delta
