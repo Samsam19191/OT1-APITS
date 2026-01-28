@@ -768,17 +768,27 @@ cache.value[layer] → [V₁, V₂, V₃]</pre>
                         <div class="code-block" style="font-size: 19px;">
                             <span class="keyword">def</span> <span class="function">extend</span>(new_text):
                             <span class="comment"># 1. Tokenize full text</span>
+                            <br>
+
                             full_ids = tokenize(base_prompt + confirmed + new_text)
-
                             <span class="comment"># 2. Get only new tokens</span>
+                            <br>
+
                             delta_ids = full_ids[len(current_cache):]
-
                             <span class="comment"># 3. Forward pass on delta only</span>
-                            <span class="keyword">if</span> len(delta_ids) > <span class="number">0</span>:
-                            model.forward(delta_ids, past_kv=cache)
-                            cache.update(new_keys, new_values)
+                            <br>
 
-                            <span class="comment"># 4. Update confirmed text</span>
+                            <span class="keyword">if</span> len(delta_ids) > <span class="number">0</span>:
+                            <br>
+                            outputs = model.forward(delta_ids, past_kv=cache)
+                            <span class="comment"># 4. Compute the new KV Cache</span>
+                            <br>
+
+                            cache.update(outputs)
+
+                            <span class="comment"># 5. Update the KV Cache</span>
+                            <br>
+
                             confirmed += new_text
                         </div>
                     </div>
@@ -787,8 +797,8 @@ cache.value[layer] → [V₁, V₂, V₃]</pre>
                         <div class="highlight-box orange">
                             <h4 style="color: #f59e0b;">The Problem</h4>
                             <p style="color: #888; font-size: 22px;">
-                                Tokenizing "hel" → different tokens than "hello".<br>
-                                The last token can <strong>change</strong>, not just append!
+                                Tokenizing "Show patients" → ["Show ", "patients"] or ["Show", " patients"].<br>
+                                The tokenizer behaviour can <strong>change</strong>!
                             </p>
                         </div>
                         <div class="highlight-box" style="margin-top: 20px;">
@@ -797,9 +807,6 @@ cache.value[layer] → [V₁, V₂, V₃]</pre>
                                 Detect merges by comparing expected vs actual token count.<br>
                                 If merged: <strong>crop(n-1)</strong> then re-extend.
                             </p>
-                        </div>
-                        <div class="key-finding" style="margin-top: 20px; font-size: 22px;">
-                            Forward pass on delta only = O(Δn) not O(n)
                         </div>
                     </div>
                 </div>
@@ -820,15 +827,15 @@ cache.value[layer] → [V₁, V₂, V₃]</pre>
                         <div class="highlight-box red" style="border-left-color: #ef4444; margin-bottom: 25px;">
                             <h4 style="color: #ef4444;">The Challenge</h4>
                             <p style="color: #888; font-size: 24px;">
-                                User types "Hello worl" then backspaces.<br>
-                                Cached tokens for "worl" are now invalid!
+                                User types "Hello world" then backspaces.<br>
+                                Cached tokens for "world" are now invalid!
                             </p>
                         </div>
                         <div class="highlight-box" style="margin-bottom: 25px;">
                             <h4>Naive Approach ❌</h4>
                             <p style="color: #888; font-size: 24px;">
                                 Recompute entire cache from scratch.<br>
-                                <strong>Expensive</strong> - loses all the benefit!
+                                <strong>Expensive</strong> and loses all the benefit!
                             </p>
                         </div>
                         <div class="highlight-box" style="background: rgba(0,212,170,0.15); border-color: #00d4aa;">
@@ -876,7 +883,7 @@ cache.get_seq_length()  <span class="comment"># → 45</span>
                     <div class="highlight-box" style="margin-bottom: 30px;">
                         <h4>At Submission Time</h4>
                         <p style="color: #888; font-size: 26px;">
-                            The KV-cache exactly represents the tokenization of:<br>
+                            The remaining text is extended and finally the KV-cache exactly represents the tokenization of:<br>
                             <code
                                 style="color: #00d4aa; font-size: 24px;">base_prompt + confirmed_text + pending_text</code>
                         </p>
