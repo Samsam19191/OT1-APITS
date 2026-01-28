@@ -883,7 +883,8 @@ cache.get_seq_length()  <span class="comment"># → 45</span>
                     <div class="highlight-box" style="margin-bottom: 30px;">
                         <h4>At Submission Time</h4>
                         <p style="color: #888; font-size: 26px;">
-                            The remaining text is extended and finally the KV-cache exactly represents the tokenization of:<br>
+                            The remaining text is extended and finally the KV-cache exactly represents the tokenization
+                            of:<br>
                             <code
                                 style="color: #00d4aa; font-size: 24px;">base_prompt + confirmed_text + pending_text</code>
                         </p>
@@ -924,54 +925,69 @@ cache.get_seq_length()  <span class="comment"># → 45</span>
     <div class="slide-container" data-slide="15">
         <div class="slide">
             <div class="slide-header">
-                <h1 class="slide-title">Why Qwen2.5-Coder-1.5B?</h1>
-                <p class="slide-subtitle">Model selection rationale</p>
+                <h1 class="slide-title">Why Qwen2.5-Coder-3B?</h1>
+                <p class="slide-subtitle">Model selection journey</p>
             </div>
             <div class="content">
                 <div class="two-column">
                     <div>
-                        <div class="highlight-box" style="margin-bottom: 20px;">
-                            <h4>SQL/Code Capability</h4>
-                            <p style="color: #888; font-size: 24px;">
-                                State-of-the-art for sub-3B models. Specifically trained on code and SQL tasks.
-                            </p>
+                        <h3>Our Selection Process</h3>
+                        <div class="process-step"
+                            style="border-left-color: #ef4444; padding: 12px 18px; margin-bottom: 10px;">
+                            <div class="step-number"
+                                style="background: #ef4444; width: 32px; height: 32px; font-size: 16px;">1</div>
+                            <div class="step-text" style="font-size: 20px;"><strong>1.5B</strong>: Poor SQL quality
+                            </div>
                         </div>
-                        <div class="highlight-box purple" style="margin-bottom: 20px;">
-                            <h4 style="color: #6366f1;">Efficient Tokenization</h4>
-                            <p style="color: #888; font-size: 24px;">
-                                152K vocabulary vs Llama's 32K. Fewer tokens = faster prefill.
-                            </p>
+                        <div class="process-step" style="padding: 12px 18px; margin-bottom: 10px;">
+                            <div class="step-number" style="width: 32px; height: 32px; font-size: 16px;">2</div>
+                            <div class="step-text" style="font-size: 20px;"><strong>3B</strong>: Good balance ✓</div>
                         </div>
-                        <div class="highlight-box" style="margin-bottom: 20px;">
-                            <h4>GQA Architecture</h4>
-                            <p style="color: #888; font-size: 24px;">
-                                Grouped Query Attention = smaller KV-cache memory footprint.
-                            </p>
+                        <div class="process-step" style="border-left-color: #f59e0b; padding: 12px 18px;">
+                            <div class="step-number"
+                                style="background: #f59e0b; width: 32px; height: 32px; font-size: 16px;">3</div>
+                            <div class="step-text" style="font-size: 20px;"><strong>7B</strong>: Too large for our GPUs
+                            </div>
                         </div>
-                        <div class="highlight-box purple">
-                            <h4 style="color: #6366f1;">DynamicCache Support</h4>
-                            <p style="color: #888; font-size: 24px;">
-                                Full support for <code style="color: #6366f1;">extend()</code> and <code
-                                    style="color: #6366f1;">crop()</code> operations.
-                            </p>
+                        <div class="highlight-box" style="margin-top: 20px;">
+                            <h4>Why Qwen?</h4>
+                            <ul style="color: #888; font-size: 20px; list-style: none; margin: 0;">
+                                <li>• 152K vocab (efficient tokenization)</li>
+                                <li>• GQA = smaller KV-cache</li>
+                                <li>• Full DynamicCache support</li>
+                            </ul>
                         </div>
                     </div>
                     <div>
-                        <h3>The Right Balance</h3>
-                        <div class="stat-box" style="margin-bottom: 20px;">
-                            <div class="number">1.5B</div>
-                            <div class="label">Parameters - fits on consumer GPU</div>
+                        <h3>Key Insight</h3>
+                        <div class="highlight-box"
+                            style="background: rgba(0,212,170,0.15); border-color: #00d4aa; margin-bottom: 20px;">
+                            <h4>Accuracy = Baseline</h4>
+                            <p style="color: #888; font-size: 20px;">
+                                Using HuggingFace <code style="color: #00d4aa;">.generate()</code>, our accuracy matches
+                                baseline exactly.
+                            </p>
                         </div>
-                        <div class="stat-box green" style="margin-bottom: 20px;">
-                            <div class="number">~3GB</div>
-                            <div class="label">VRAM in float16</div>
+                        <div class="highlight-box purple">
+                            <h4 style="color: #6366f1;">SQL Quality ≠ Our Implementation</h4>
+                            <p style="color: #888; font-size: 20px;">
+                                Any accuracy limitations are due to <strong>model size</strong> (context/reasoning), not
+                                our prefill approach.
+                            </p>
                         </div>
-                        <div class="stat-box" style="margin-bottom: 20px;">
-                            <div class="number">~70%</div>
-                            <div class="label">Execution accuracy on Spider</div>
-                        </div>
-                        <div class="key-finding" style="font-size: 22px;">
-                            Fast enough for real-time,<br>smart enough for SQL
+                        <div class="three-boxes" style="margin-top: 20px; gap: 15px;">
+                            <div class="stat-box" style="padding: 15px;">
+                                <div class="number" style="font-size: 28px;">3B</div>
+                                <div class="label" style="font-size: 16px;">Parameters</div>
+                            </div>
+                            <div class="stat-box green" style="padding: 15px;">
+                                <div class="number" style="font-size: 28px;">~5GB</div>
+                                <div class="label" style="font-size: 16px;">VRAM</div>
+                            </div>
+                            <div class="stat-box" style="padding: 15px;">
+                                <div class="number" style="font-size: 28px;">~71%</div>
+                                <div class="label" style="font-size: 16px;">Accuracy</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1002,29 +1018,37 @@ cache.get_seq_length()  <span class="comment"># → 45</span>
                             <td class="speedup">Our primary goal - user-perceived latency</td>
                         </tr>
                         <tr>
-                            <td><strong>Execution Accuracy</strong></td>
-                            <td>Does SQL return correct results?</td>
-                            <td>Proves we don't sacrifice quality for speed</td>
+                            <td><strong>Syntax Valid</strong></td>
+                            <td>Does SQL run without errors?</td>
+                            <td>Basic correctness check</td>
                         </tr>
                         <tr>
-                            <td><strong>Exact Match</strong></td>
-                            <td>Is SQL identical to gold?</td>
-                            <td>Stricter correctness check</td>
+                            <td><strong>Result Match</strong></td>
+                            <td>Do results match gold query?</td>
+                            <td>Semantic correctness (order-agnostic)</td>
                         </tr>
                         <tr>
-                            <td><strong>Memory Usage</strong></td>
-                            <td>RAM and GPU memory</td>
-                            <td>Important trade-off to monitor</td>
+                            <td><strong>Memory & GPU</strong></td>
+                            <td>RAM, VRAM, GPU load</td>
+                            <td>Resource overhead monitoring</td>
                         </tr>
                     </tbody>
                 </table>
-                <div class="highlight-box" style="margin-top: 30px;">
-                    <h4>Expected Memory Trade-off</h4>
-                    <p style="color: #888; font-size: 24px;">
-                        Our approach keeps the KV-cache alive during typing session.<br>
-                        Baseline only allocates during generation.<br>
-                        <strong>Trade-off: Slightly more memory for much lower latency.</strong>
-                    </p>
+                <div class="two-column" style="margin-top: 25px; gap: 30px;">
+                    <div class="highlight-box" style="background: rgba(0,212,170,0.15); border-color: #00d4aa;">
+                        <h4>Memory: Same ✓</h4>
+                        <p style="color: #888; font-size: 20px;">
+                            Model size (~5GB) >> KV-cache (~50MB)<br>
+                            <strong>Negligible overhead</strong>
+                        </p>
+                    </div>
+                    <div class="highlight-box purple">
+                        <h4 style="color: #6366f1;">GPU Load: Smoother ✓</h4>
+                        <p style="color: #888; font-size: 20px;">
+                            Baseline: big spike at submit<br>
+                            APITS: <strong>spread over typing time</strong>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

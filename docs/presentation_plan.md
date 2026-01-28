@@ -131,12 +131,12 @@
 
 **Objective**: Explain methodology, choices, and expected outcomes
 
-### 6.1 Model Choice: Why Qwen2.5-Coder-1.5B?
-- State-of-the-art SQL/code capability for sub-3B models
-- 152K vocabulary (efficient tokenization vs Llama's 32K)
+### 6.1 Model Choice: Why Qwen2.5-Coder-3B?
+- **Selection journey**: 1.5B (poor) → 3B (good) → 7B (too large for our GPUs)
+- 152K vocabulary (efficient tokenization)
 - **GQA architecture** → smaller KV-cache memory footprint
 - Full `DynamicCache` support including `crop()` operation
-- Good balance: fast enough for real-time, smart enough for SQL
+- **Key insight**: Accuracy matches baseline with `.generate()` — SQL quality issues are model size, not our implementation
 
 ### 6.2 Why These Metrics?
 | Metric | Why We Chose It |
