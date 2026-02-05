@@ -34,7 +34,7 @@ def _build_report(metrics: Metrics, results: List[EvalResult]) -> str:
     
     # Status emoji
     acc = metrics.exact_match_accuracy
-    status = "🟢 Excellent" if acc >= 80 else "🟡 Good" if acc >= 60 else "🟠 Fair" if acc >= 40 else "🔴 Poor"
+    status = "[Excellent]" if acc >= 80 else "[Good]" if acc >= 60 else "[Fair]" if acc >= 40 else "[Poor]"
     
     # Failures
     failures = [r for r in results if not r.is_correct()]
@@ -59,9 +59,9 @@ def _build_report(metrics: Metrics, results: List[EvalResult]) -> str:
 | Avg Inference Time | {metrics.avg_inference_time_ms:.2f} ms |
 | Avg TTFT | {metrics.avg_ttft_ms:.2f} ms |
 
-- ✅ {metrics.result_match} correct
-- ⚠️ {len(wrong_results)} wrong results  
-- ❌ {len(syntax_errors)} syntax errors
+- [PASS] {metrics.result_match} correct
+- [WARN] {len(wrong_results)} wrong results  
+- [FAIL] {len(syntax_errors)} syntax errors
 
 """
 

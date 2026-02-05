@@ -25,7 +25,7 @@ def get_db_connection():
         conn = psycopg2.connect(db_url)
         return conn
     except psycopg2.Error as e:
-        print(f"❌ Failed to connect to database: {e}")
+        print(f"Failed to connect to database: {e}")
         print("Make sure the database is running: docker-compose -f docker-compose.app.yml up -d db_app")
         raise
 
@@ -70,24 +70,24 @@ def seed_database(conn):
     )
     
     conn.commit()
-    print(f"✅ Seeded {len(sample_patients)} patients into application database")
+    print(f"Seeded {len(sample_patients)} patients into application database")
     
     # Verify
     cursor.execute("SELECT COUNT(*) FROM patients")
     count = cursor.fetchone()[0]
-    print(f"✅ Verification: {count} records in patients table")
+    print(f"Verification: {count} records in patients table")
     
     cursor.close()
 
 
 def main():
-    print("🌱 Seeding application database...")
+    print("Seeding application database...")
     conn = get_db_connection()
     try:
         seed_database(conn)
     finally:
         conn.close()
-    print("✅ Application database seeding complete")
+    print("Application database seeding complete")
 
 
 if __name__ == "__main__":

@@ -46,12 +46,12 @@ async def test_websocket():
         for char in test_query:
             current_text += char
             await ws.send(json.dumps({
-                "type": "keystroke",
-                "text": current_text
+                "type": "text_update",
+                "full_text": current_text
             }))
             response = await ws.recv()
             data = json.loads(response)
-            print(f"  ← keystroke: '{data.get('current_text', '')}'")
+            print(f"  ← text_update: '{data.get('current_text', '')}'")
             
             # Check for flush events (sent async by server)
             try:

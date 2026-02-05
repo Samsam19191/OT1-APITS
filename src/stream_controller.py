@@ -398,24 +398,23 @@ class StreamController:
 
         # Normal Typing (Append)
         if len(text) > len(self.current_text):
-             char = text[len(self.current_text)]
-             self.current_text += char
-             # print(f"[Controller] Key: '{char}' | Buffer: '{self.current_text}'")
-        else:
-             # Fallback if text didn't grow (duplicate event?)
-             pass
-        
-        # 1. Check for immediate trigger
-        if char in CONFIRMATION_BOUNDARIES:
-            self.confirmation_counter += 1
+            char = text[len(self.current_text)]
+            self.current_text += char
             
-        if self.confirmation_counter >= self.force_flush_confirmation:
-            print("[Controller] Force Flush triggered (Whitespace/Punctuation).")
-            self._trigger_background_extension()
-            if self._debounce_timer: self._debounce_timer.cancel()
-            self.confirmation_counter = 0 
+            # 1. Check for immediate trigger
+            if char in CONFIRMATION_BOUNDARIES:
+                self.confirmation_counter += 1
+                
+            if self.confirmation_counter >= self.force_flush_confirmation:
+                print("[Controller] Force Flush triggered (Whitespace/Punctuation).")
+                self._trigger_background_extension()
+                if self._debounce_timer: self._debounce_timer.cancel()
+                self.confirmation_counter = 0 
+            else:
+                self._reset_debounce_timer()
         else:
-            self._reset_debounce_timer()
+            # Fallback if text didn't grow (duplicate event or no change)
+            pass
 
         return {
             "event": "text_update",

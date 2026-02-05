@@ -27,6 +27,7 @@ from .stream_controller import (
 )
 
 from .utils import load_model_and_tokenizer
+from . import config
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -52,10 +53,10 @@ async def lifespan(app: FastAPI):
     """
     Load ML models on startup, unload on shutdown.
     """
-    logger.info("Loading model and tokenizer... (This may take a moment)")
+    logger.info(f"Loading model {config.MODEL_NAME}... (This may take a moment)")
     
     # LOAD HERE - This runs before any request is accepted
-    model, tokenizer, device = load_model_and_tokenizer("Qwen/Qwen2.5-Coder-1.5B-Instruct")
+    model, tokenizer, device = load_model_and_tokenizer(config.MODEL_NAME)
     
     ml_resources["model"] = model
     ml_resources["tokenizer"] = tokenizer
@@ -73,25 +74,19 @@ BASE_PROMPT = """
 You are an expert SQL Assistant and Data Architect. Your goal is to generate accurate, syntactically correct, and efficient SQL queries based on the user's natural language question and the provided database schema.
 
 ### Schema:
-Table: users (id, name, email, signup_date)
-Table: orders (id, user_id, amount, status, created_at)
+Table: patients (patient_id, name, age, diagnosis)
 
 ### EXAMPLE:
 ```sql
 SELECT
-    u.name,
-    SUM(o.amount) as total_spent
+    name,
+    age
 FROM
-    users u
-JOIN
-    orders o ON u.id = o.user_id
+    patients
 WHERE
-    u.signup_date >= '2023-01-01' AND u.signup_date <= '2023-12-31'
-GROUP BY
-    u.id, u.name
+    diagnosis = 'diabetes'
 ORDER BY
-    total_spent DESC
-LIMIT 5; 
+    age DESC;
 ```
 
 VERY IMPORTANT: You cannot add anything to the user question.

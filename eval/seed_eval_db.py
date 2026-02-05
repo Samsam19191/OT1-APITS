@@ -46,11 +46,11 @@ def map_sqlite_type_to_pg(sqlite_type: str) -> str:
 
 def migrate_database(db_name: str, pg_conn, force: bool):
     """Migrate a single database from SQLite to Postgres."""
-    print(f"\n🌱 Seeding database: {db_name}...")
+    print(f"\nSeeding database: {db_name}...")
     
     sqlite_path = get_sqlite_path(db_name)
     if not sqlite_path.exists():
-        print(f"  ❌ SQLite file not found: {sqlite_path}")
+        print(f"  SQLite file not found: {sqlite_path}")
         return
 
     sqlite_conn = sqlite3.connect(sqlite_path)
@@ -74,10 +74,10 @@ def migrate_database(db_name: str, pg_conn, force: bool):
         exists = pg_cur.fetchone()[0]
         
         if exists and not force:
-            print(f"  ⏭️  Table {table} already exists. Skipping.")
+            print(f"  Skipping existing table: {table}")
             continue
             
-        print(f"  🔨 Migrating table: {table_raw} -> {table}")
+        print(f"  Migrating table: {table_raw} -> {table}")
         
         # Drop if force
         if exists and force:
@@ -144,10 +144,10 @@ def migrate_database(db_name: str, pg_conn, force: bool):
         try:
             from psycopg2.extras import execute_batch
             execute_batch(pg_cur, insert_sql, rows)
-            print(f"    ✅ Inserted {len(rows)} rows.")
+            print(f"    Inserted {len(rows)} rows.")
             pg_conn.commit()
         except Exception as e:
-            print(f"    ❌ Insert failed: {e}")
+            print(f"    Insert failed: {e}")
             pg_conn.rollback()
 
     sqlite_conn.close()
@@ -160,7 +160,7 @@ def update_metadata_with_fks(db_name: str):
     json_path = DATA_ROOT / db_name / f"{db_name}.json"
     
     if not sqlite_path.exists() or not json_path.exists():
-        print(f"    ⚠️ Missing files for {db_name}. Skipping metadata update.")
+        print(f"    Missing files for {db_name}. Skipping metadata update.")
         return
 
     # Load existing JSON
@@ -168,7 +168,7 @@ def update_metadata_with_fks(db_name: str):
         with open(json_path, 'r') as f:
             metadata = json.load(f)
     except Exception as e:
-        print(f"    ❌ Failed to load JSON: {e}")
+        print(f"    Failed to load JSON: {e}")
         return
 
     sqlite_conn = sqlite3.connect(sqlite_path)
@@ -200,7 +200,7 @@ def update_metadata_with_fks(db_name: str):
         # Find corresponding table in metadata
         target_meta = next((t for t in metadata if t['table'] == norm_table), None)
         if not target_meta:
-            print(f"    ⚠️ Could not find metadata for table {norm_table} (raw: {raw_table})")
+            print(f"    Could not find metadata for table {norm_table} (raw: {raw_table})")
             continue
             
         # Get FKs
@@ -230,7 +230,7 @@ def update_metadata_with_fks(db_name: str):
     # Write back
     with open(json_path, 'w') as f:
         json.dump(metadata, f, indent=4)
-    print("    ✅ JSON updated.")
+    print("    JSON updated.")
 
 def seed_all(force: bool = False):
     print("=" * 50)
@@ -239,9 +239,9 @@ def seed_all(force: bool = False):
     
     try:
         pg_conn = get_postgres_connection()
-        print("✅ Connected to PostgreSQL")
+        print("Connected to PostgreSQL")
     except Exception as e:
-        print(f"❌ Connection failed: {e}")
+        print(f"Connection failed: {e}")
         return
 
     for db in DATABASES:
@@ -249,7 +249,7 @@ def seed_all(force: bool = False):
         update_metadata_with_fks(db)
         
     pg_conn.close()
-    print("\n✅ Done!")
+    print("\nDone!")
 
 if __name__ == "__main__":
     import argparse

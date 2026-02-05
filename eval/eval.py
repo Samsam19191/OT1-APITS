@@ -197,7 +197,7 @@ def load_questions(limit: int = None, db_filter: str = None):
         # Direct lookup if filter is provided
         target_dir = data_dir / db_filter
         if not target_dir.exists() or not target_dir.is_dir():
-            print(f"⚠️ Warning: Database directory '{db_filter}' not found at {target_dir}")
+            print(f"Warning: Database directory '{db_filter}' not found at {target_dir}")
             return []
         dirs_to_scan = [target_dir]
     else:
@@ -225,7 +225,7 @@ async def evaluate_batch(generator, questions, executor, schema_loader, desc="Ev
     """Run evaluation loop for a given generator and set of questions."""
     metrics_collector = MetricsCollector()
     
-    print(f"\n🚀 {desc}: {len(questions)} questions...")
+    print(f"\nRunning batches: {len(questions)} questions...")
     print("-" * 60)
     
     start_time = time.time()
@@ -249,9 +249,9 @@ async def evaluate_batch(generator, questions, executor, schema_loader, desc="Ev
             prompt_schema = schema_loader.get_schema_prompt(db_id)
         except Exception as e:
             if hasattr(iterator, "write"):
-                iterator.write(f"⚠️ Schema load failed for {db_id}: {e}")
+                iterator.write(f"Warning: Schema load failed for {db_id}: {e}")
             else:
-                print(f"⚠️ Schema load failed for {db_id}: {e}")
+                print(f"Warning: Schema load failed for {db_id}: {e}")
             metrics_collector.add(EvalResult(
                 question_id=q_id, question=question, gold_query=gold_sql, predicted_query="",
                 syntax_valid=False, syntax_error=f"Schema Load Error: {e}",
@@ -265,7 +265,7 @@ async def evaluate_batch(generator, questions, executor, schema_loader, desc="Ev
         try:
             pred_sql, ttft_ms = await generator.generate(question, schema=prompt_schema)
         except Exception as e:
-            msg = f"⚠️ Generation failed: {e}"
+            msg = f"Generation failed: {e}"
             if hasattr(iterator, "write"):
                 iterator.write(msg)
             else:
@@ -300,7 +300,7 @@ async def evaluate_batch(generator, questions, executor, schema_loader, desc="Ev
         metrics_collector.add(result)
         
         # Progress
-        status = "✅" if result.is_correct() else ("⚠️" if res_pred.success else "❌")
+        status = "[OK]" if result.is_correct() else ("[WARN]" if res_pred.success else "[FAIL]")
         
         # Update logs
         log_msg = f"[{i+1:3d}/{len(questions)}] {status} {q_id}"
@@ -326,10 +326,10 @@ async def run_eval(limit: int = None, model_name: str = "Qwen/Qwen2.5-Coder-1.5B
     executor = SQLExecutor()
     test = executor.execute("SELECT 1")
     if not test.success:
-        print(f"❌ PostgreSQL failed: {test.error}")
+        print(f"PostgreSQL failed: {test.error}")
         print("Run: docker-compose -f docker-compose.eval.yml up -d")
         return
-    print("✅ Connected")
+    print("Connected")
     
     # Load schema loader
     schema_loader = SchemaLoader(Path(__file__).parent / "data")
@@ -337,10 +337,10 @@ async def run_eval(limit: int = None, model_name: str = "Qwen/Qwen2.5-Coder-1.5B
     # Load model (Main Generator)
     generator = SQLGenerator(model_name, verbose=False, use_baseline=False)
     generator.load()
-    print(f"✅ Model loaded successfully (KV Cache).")
+    print(f"Model loaded successfully (KV Cache).")
     
     # Load questions
-    print(f"\n📋 Loading questions from all databases...")
+    print(f"\nLoading questions from all databases...")
     questions = load_questions(limit, db)
     print(f"Loaded {len(questions)} cases.")
     

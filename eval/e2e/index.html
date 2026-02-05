@@ -4,18 +4,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E2E Anticipatory Prefill Evaluation</title>
+    <title>DEMO: Anticipatory Prefill</title>
+    <!-- Chart.js for Graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        /* FONTS */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
+
         :root {
-            --bg-primary: #0d1117;
-            --bg-secondary: #161b22;
-            --bg-tertiary: #21262d;
-            --text-primary: #c9d1d9;
-            --text-secondary: #8b949e;
-            --accent: #58a6ff;
-            --success: #3fb950;
-            --warning: #d29922;
-            --border: #30363d;
+            --bg-deep: #050510;
+            --bg-glass: rgba(20, 20, 35, 0.6);
+            --border-glass: rgba(255, 255, 255, 0.1);
+
+            --text-primary: #e0e6ed;
+            --text-secondary: #94a3b8;
+
+            /* NEON PALETTE */
+            --accent-glow: 0 0 20px rgba(88, 166, 255, 0.5);
+
+            --baseline-color: #ff3366;
+            /* Neon Red */
+            --baseline-glow: 0 0 15px rgba(255, 51, 102, 0.4);
+
+            --apits-color: #00f2ff;
+            /* Neon Cyan */
+            --apits-glow: 0 0 15px rgba(0, 242, 255, 0.4);
+
+            --success: #00ffa3;
+            /* Neon Green */
+            --success-glow: 0 0 15px rgba(0, 255, 163, 0.4);
+
+            --blur-amt: 12px;
         }
 
         * {
@@ -25,622 +44,1018 @@
         }
 
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background: var(--bg-primary);
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at 50% -20%, #1a1a40 0%, var(--bg-deep) 60%);
             color: var(--text-primary);
             min-height: 100vh;
-            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            /* Enable scrolling */
         }
 
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
+        /* UTILS */
+        .glass-panel {
+            background: var(--bg-glass);
+            backdrop-filter: blur(var(--blur-amt));
+            -webkit-backdrop-filter: blur(var(--blur-amt));
+            border: 1px solid var(--border-glass);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        /* HEADER */
+        .header {
+            margin: 1.5rem 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
         }
 
         h1 {
-            font-size: 1.8rem;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(135deg, var(--accent), #a371f7);
-            background-clip: text;
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
         }
 
-        .subtitle {
-            color: var(--text-secondary);
-            margin-bottom: 1.5rem;
-        }
-
-        .panel {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .panel h2 {
-            font-size: 1rem;
-            margin-bottom: 1rem;
-            color: var(--text-secondary);
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .form-group {
+        /* CONTROLS */
+        .controls {
             display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
+            gap: 0.8rem;
+            align-items: center;
         }
 
-        label {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-
-        input,
-        select {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 0.6rem;
-            color: var(--text-primary);
-            font-size: 0.9rem;
-        }
-
-        input:focus,
-        select:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
+        select,
         button {
-            padding: 0.75rem 1.5rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
             border-radius: 8px;
-            border: none;
-            font-size: 0.95rem;
-            font-weight: 600;
+            border: 1px solid var(--border-glass);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            padding: 0.6rem 1rem;
             cursor: pointer;
             transition: all 0.2s;
         }
 
-        .btn-primary {
-            background: var(--accent);
-            color: var(--bg-primary);
+        button:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
         }
 
-        .btn-primary:hover:not(:disabled) {
-            filter: brightness(1.1);
+        button.primary {
+            background: rgba(88, 166, 255, 0.15);
+            border-color: rgba(88, 166, 255, 0.4);
+            color: #58a6ff;
+            font-weight: 600;
         }
 
-        .btn-primary:disabled {
-            background: var(--bg-tertiary);
-            color: var(--text-secondary);
+        button.primary:hover:not(:disabled) {
+            background: #58a6ff;
+            color: #000;
+            box-shadow: var(--accent-glow);
+        }
+
+        button:disabled {
+            opacity: 0.4;
             cursor: not-allowed;
         }
 
-        .status-bar {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
-        }
-
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: var(--text-secondary);
-        }
-
-        .status-dot.connected {
-            background: var(--success);
-            box-shadow: 0 0 8px var(--success);
-        }
-
-        .live-view {
+        /* WORKSPACE */
+        .workspace {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 1rem;
+            gap: 1.5rem;
+            padding: 0 2rem;
+            flex: 1;
+            /* Allow content to push height */
         }
 
-        .live-box {
-            background: var(--bg-tertiary);
-            border-radius: 8px;
-            padding: 1rem;
-            font-family: 'Fira Code', monospace;
-            font-size: 0.85rem;
-            min-height: 150px;
-            max-height: 250px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            word-break: break-word;
+        .pane {
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
-        .live-box.prompt {
-            border-left: 3px solid var(--accent);
-        }
-
-        .live-box.output {
-            border-left: 3px solid var(--success);
-            color: var(--success);
-        }
-
-        .live-label {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            margin-bottom: 0.5rem;
-        }
-
-        .progress-info {
+        .pane-header {
+            padding: 1rem 1.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 0.5rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid var(--border-glass);
         }
 
-        .progress-bar {
-            height: 6px;
-            background: var(--bg-tertiary);
-            border-radius: 3px;
+        /* Traffic Lights */
+        .window-controls {
+            display: flex;
+            gap: 6px;
+            margin-right: 12px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .dot.red {
+            background: #ff5f56;
+        }
+
+        .dot.yellow {
+            background: #ffbd2e;
+        }
+
+        .dot.green {
+            background: #27c93f;
+        }
+
+        .console {
+            flex: 1;
+            padding: 1.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            /* Darker inner for text */
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            overflow-y: auto;
+            line-height: 1.6;
+            color: #d1d5db;
+            white-space: pre-wrap;
+            /* Preserve spaces and newlines */
+        }
+
+        /* Custom Scrollbar */
+        .console::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .console::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .console::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .system-prompt {
+            color: #58a6ff;
+            font-style: italic;
+            opacity: 0.6;
+            margin-bottom: 1rem;
+            border-left: 2px solid rgba(88, 166, 255, 0.3);
+            padding-left: 1rem;
+        }
+
+        .user-input {
+            margin-bottom: 1rem;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+            font-weight: 600;
+        }
+
+        .output-block {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            background: rgba(0, 255, 163, 0.05);
+            /* Very faint green tint */
+            border: 1px solid rgba(0, 255, 163, 0.2);
+            color: var(--success);
+            font-size: 0.85rem;
+            animation: slideUp 0.3s ease-out;
+            white-space: pre-wrap;
+            /* Preserve spaces and newlines */
+            word-break: break-all;
+        }
+
+        /* BADGES */
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .badge.waiting {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-secondary);
+        }
+
+        .badge.running {
+            background: #fff;
+            color: #000;
+            animation: pulse 1.5s infinite;
+        }
+
+        .badge.done {
+            background: var(--success);
+            color: #000;
+            box-shadow: var(--success-glow);
+        }
+
+        /* VIZ PANEL */
+        .viz-panel {
+            margin: 1.5rem 2rem;
+            height: 320px;
+            border-radius: 16px;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            padding: 1.5rem;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* METRICS CARDS */
+        .metrics-grid {
+            display: grid;
+            grid-template-rows: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .metric-card {
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-glass);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
             overflow: hidden;
         }
 
-        .progress-fill {
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
             height: 100%;
-            background: linear-gradient(90deg, var(--accent), var(--success));
-            width: 0%;
-            transition: width 0.3s;
         }
 
-        .metrics-bar {
-            display: flex;
-            gap: 1.5rem;
-            flex-wrap: wrap;
-            margin-top: 1rem;
+        .metric-card.base::before {
+            background: var(--baseline-color);
+            box-shadow: var(--baseline-glow);
         }
 
-        .metric-item {
-            text-align: center;
+        .metric-card.apits::before {
+            background: var(--apits-color);
+            box-shadow: var(--apits-glow);
         }
 
-        .metric-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--accent);
+        .metric-val {
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1;
+            margin: 0.5rem 0;
         }
 
         .metric-label {
             font-size: 0.75rem;
             color: var(--text-secondary);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
         }
 
-        .results-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-            font-size: 0.85rem;
+        /* OVERLAY RESULT */
+        #resultOverlay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            padding: 3rem;
+            border-radius: 24px;
+            background: rgba(5, 5, 16, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--apits-color);
+            box-shadow: 0 0 100px rgba(0, 242, 255, 0.2), inset 0 0 30px rgba(0, 242, 255, 0.1);
+            z-index: 100;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        .results-table th,
-        .results-table td {
-            padding: 0.6rem;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
+        .res-item {
+            text-align: center;
         }
 
-        .results-table th {
+        .res-val {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-top: 0.5rem;
+        }
+
+        .res-label {
+            font-size: 0.8rem;
             color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        .results-table td {
-            font-family: 'Fira Code', monospace;
-        }
-
-        .improvement {
-            color: var(--success);
-            font-weight: 600;
+            letter-spacing: 0.1em;
         }
 
         .hidden {
-            display: none;
+            display: none !important;
         }
 
+        /* ANIMATIONS */
         @keyframes blink {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
             50% {
                 opacity: 0;
             }
         }
 
-        .cursor {
-            animation: blink 1s infinite;
+        @keyframes pulse {
+            0% {
+                opacity: 0.6;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.6;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(10px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes popIn {
+            from {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0;
+            }
+
+            to {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <h1>⚡ E2E Anticipatory Prefill Evaluation</h1>
-        <p class="subtitle">True end-to-end metrics measured from browser</p>
-
-        <div class="status-bar">
-            <div class="status-dot" id="connectionDot"></div>
-            <span id="connectionStatus">Connecting...</span>
+    <div class="header glass-panel">
+        <div style="display:flex; align-items:center; gap:1rem;">
+            <h1>⚡ Anticipatory Prefill Demo</h1>
+            <span id="qCounter"
+                style="color:var(--text-secondary); font-size:0.8rem; font-weight:600; padding:4px 8px; background:rgba(255,255,255,0.05); border-radius:6px;">Question
+                -/-</span>
         </div>
-
-        <!-- Config Panel -->
-        <div class="panel">
-            <h2>Configuration</h2>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Model</label>
-                    <select id="modelSelect">
-                        <option value="Qwen/Qwen2.5-Coder-3B-Instruct">Qwen2.5-Coder-3B</option>
-                        <option value="Qwen/Qwen2.5-Coder-1.5B-Instruct">Qwen2.5-Coder-1.5B</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Database</label>
-                    <select id="dbSelect">
-                        <option value="car_1">car_1</option>
-                        <option value="dog_kennels">dog_kennels</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Questions</label>
-                    <input type="number" id="limitInput" value="3" min="1" max="20">
-                </div>
-                <div class="form-group">
-                    <label>Typing Speed (cps)</label>
-                    <input type="number" id="speedInput" value="100" min="20" max="500">
-                </div>
-            </div>
-            <button class="btn-primary" id="launchBtn">🚀 Launch E2E Evaluation</button>
-        </div>
-
-        <!-- Live View Panel -->
-        <div class="panel" id="livePanel">
-            <h2 id="liveTitle">Live View</h2>
-            <div class="progress-info">
-                <span id="progressLabel">Ready</span>
-                <span id="currentQuestion">-</span>
-            </div>
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
-            </div>
-
-            <div class="live-view">
-                <div>
-                    <div class="live-label">Prompt (typing...)</div>
-                    <div class="live-box prompt" id="livePrompt">Waiting...</div>
-                </div>
-                <div>
-                    <div class="live-label">Generated Output</div>
-                    <div class="live-box output" id="liveOutput">-</div>
-                </div>
-            </div>
-
-            <div class="metrics-bar">
-                <div class="metric-item">
-                    <div class="metric-value" id="currentTtft">-</div>
-                    <div class="metric-label">Current TTFT (E2E)</div>
-                </div>
-                <div class="metric-item">
-                    <div class="metric-value" id="avgAntTtft">-</div>
-                    <div class="metric-label">Avg Anticipatory</div>
-                </div>
-                <div class="metric-item">
-                    <div class="metric-value" id="avgBaseTtft">-</div>
-                    <div class="metric-label">Avg Baseline</div>
-                </div>
-                <div class="metric-item">
-                    <div class="metric-value improvement" id="speedup">-</div>
-                    <div class="metric-label">Speedup</div>
-                </div>
-                <div class="metric-item">
-                    <div class="metric-value" id="currentRam">-</div>
-                    <div class="metric-label">Peak RAM (MB)</div>
-                </div>
-                <div class="metric-item">
-                    <div class="metric-value" id="currentMps">-</div>
-                    <div class="metric-label">Peak MPS (MB)</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Results Panel -->
-        <div class="panel hidden" id="resultsPanel">
-            <h2>Final Results</h2>
-            <table class="results-table">
-                <thead>
-                    <tr>
-                        <th>Question</th>
-                        <th>Anticipatory TTFT</th>
-                        <th>Baseline TTFT</th>
-                        <th>Speedup</th>
-                    </tr>
-                </thead>
-                <tbody id="resultsBody"></tbody>
-            </table>
-            <p style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.8rem;">
-                📄 Report saved to: <code id="reportPath">-</code>
-            </p>
+        <div class="controls">
+            <select id="modelSelect">
+                <option value="Qwen/Qwen2.5-Coder-1.5B-Instruct">Qwen 1.5B</option>
+                <option value="Qwen/Qwen2.5-Coder-3B-Instruct">Qwen 3B</option>
+            </select>
+            <select id="dbSelect">
+                <option value="car_1">car_1</option>
+                <option value="dog_kennels">dog_kennels</option>
+                <option value="cre_Doc_Template_Mgt">cre_Doc_Template_Mgt</option>
+            </select>
+            <button id="loadBtn" class="primary">Load</button>
+            <div style="width: 1px; height: 20px; background: var(--border);"></div>
+            <button id="prevBtn" disabled>←</button>
+            <button id="playBtn" disabled>▶ Run Demo</button>
+            <button id="nextBtn" disabled>→</button>
         </div>
     </div>
 
+    <!-- INPUT SECTION -->
+    <div style="padding: 0 2rem 1rem 2rem;">
+        <div class="glass-panel"
+            style="padding: 1.5rem; display:flex; flex-direction:column; gap:0.5rem; position:relative;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:0.8rem; color:var(--text-secondary); letter-spacing:0.1em; font-weight:600;">USER
+                    QUERY</span>
+                <button id="viewContextBtn"
+                    style="font-size:0.75rem; padding:4px 8px; border-radius:4px; border:1px solid var(--border-glass);">
+                    👁️ View System Logic
+                </button>
+            </div>
+
+            <div id="userInputTarget"
+                style="font-family:'JetBrains Mono'; font-size:1.2rem; min-height:1.5em; color:#fff; text-shadow:0 0 10px rgba(255,255,255,0.2);">
+            </div>
+
+            <!-- Typing Cursor (Moved here via JS) -->
+        </div>
+    </div>
+
+    <!-- MAIN SPLIT WORKSPACE -->
+    <div class="workspace"
+        style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; padding: 0 2rem; flex: 1;">
+
+        <!-- LEFT COLUMN: BASELINE -->
+        <div style="display:flex; flex-direction:column; gap:1rem; min-width:0;">
+            <!-- TITLE (Top) -->
+            <div class="glass-panel"
+                style="padding:0.8rem; display:flex; align-items:center; justify-content:space-between;">
+                <div style="display:flex; flex-direction:column;">
+                    <span
+                        style="color:var(--baseline-color); font-weight:800; font-size:0.8rem; letter-spacing:0.1em;">BASELINE</span>
+                    <span id="badgeBase" class="badge waiting" style="width:fit-content; margin-top:4px;">WAITING</span>
+                </div>
+            </div>
+
+            <!-- TERMINAL (Middle) -->
+            <div class="pane glass-panel" style="flex:1; min-height:300px;">
+                <div class="pane-header" style="justify-content:space-between;">
+                    <span style="color:var(--text-secondary); letter-spacing:0.1em; font-size:0.75rem;">RESPONSE</span>
+                    <div id="checkBase" class="correctness-indicator hidden"></div>
+                </div>
+                <div class="console" id="consoleBase"></div>
+            </div>
+
+            <!-- TTFT METRIC (New Position) -->
+            <div class="glass-panel"
+                style="padding:0.8rem; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:0.75rem; color:var(--text-secondary); letter-spacing:0.05em;">TIME TO FIRST
+                    TOKEN</span>
+                <div class="metric-val" id="valBaseTTFT" style="font-size:1.4rem;">-</div>
+            </div>
+
+            <!-- GRAPH (Bottom) -->
+            <div class="glass-panel" style="height:160px; padding:1rem; flex-shrink:0;">
+                <canvas id="chartBase"></canvas>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: APITS -->
+        <div style="display:flex; flex-direction:column; gap:1rem; min-width:0;">
+            <!-- TITLE (Top) -->
+            <div class="glass-panel"
+                style="padding:0.8rem; display:flex; align-items:center; justify-content:space-between;">
+                <div style="display:flex; flex-direction:column;">
+                    <span
+                        style="color:var(--apits-color); font-weight:800; font-size:0.8rem; letter-spacing:0.1em;">ANTICIPATORY</span>
+                    <span id="badgeAnt" class="badge waiting" style="width:fit-content; margin-top:4px;">WAITING</span>
+                </div>
+            </div>
+
+            <!-- TERMINAL (Middle) -->
+            <div class="pane glass-panel" style="flex:1; min-height:300px;">
+                <div class="pane-header" style="justify-content:space-between;">
+                    <span style="color:var(--text-secondary); letter-spacing:0.1em; font-size:0.75rem;">RESPONSE</span>
+                    <div id="checkAnt" class="correctness-indicator hidden"></div>
+                </div>
+                <div class="console" id="consoleAnt"></div>
+            </div>
+
+            <!-- TTFT METRIC (New Position) -->
+            <div class="glass-panel"
+                style="padding:0.8rem; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:0.75rem; color:var(--text-secondary); letter-spacing:0.05em;">TIME TO FIRST
+                    TOKEN</span>
+                <div style="text-align:right;">
+                    <div class="metric-val" id="valAntTTFT" style="font-size:1.4rem;">-</div>
+                    <div id="valSpeedup" style="color:var(--success); font-size:0.9rem; font-weight:bold;"></div>
+                </div>
+            </div>
+
+            <!-- GRAPH (Bottom) -->
+            <div class="glass-panel" style="height:160px; padding:1rem; flex-shrink:0;">
+                <canvas id="chartAnt"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATS STRIP REMOVED -->
+    <div style="display:none;"></div>
+
+    <!-- SYSTEM PROMPT MODAL -->
+    <div id="sysPromptModal" class="hidden" style="
+        position: fixed; top:50%; left:50%; transform:translate(-50%, -50%);
+        width: 80vw; max-height: 80vh;
+        background: rgba(5, 5, 16, 0.95); backdrop-filter: blur(20px);
+        border: 1px solid var(--border-glass); border-radius: 16px;
+        padding: 2rem; z-index: 200; overflow-y: auto;
+        box-shadow: 0 0 50px rgba(0,0,0,0.8);
+    ">
+        <div style="display:flex; justify-content:space-between; margin-bottom:1rem;">
+            <h3>⚙️ System Logic & Schema</h3>
+            <button onclick="document.getElementById('sysPromptModal').classList.add('hidden')">✕ Close</button>
+        </div>
+        <pre id="sysPromptContent"
+            style="font-family:'JetBrains Mono'; color:var(--text-secondary); font-size:0.85rem; white-space:pre-wrap;"></pre>
+    </div>
+
     <script>
+        // --- CONFIG ---
         const WS_URL = 'ws://localhost:8765';
-        let ws = null;
-        let evalState = {
-            running: false,
-            mode: null, // 'anticipatory' or 'baseline'
+        let ws;
+        let chartBase, chartAnt;
+
+        let state = {
             questions: [],
-            currentIdx: 0,
-            typingSpeed: 100,
-            submitTime: null,
-            results: { anticipatory: [], baseline: [] },
-            currentMemory: { ram: 0, mps: 0 }
+            currentIdx: -1,
+            typingSpeed: 60, // chars per sec
+            isRunning: false,
+            baselineMetrics: [],
+            apitsMetrics: []
         };
 
-        // DOM
+        // --- ELEMENTS ---
         const $ = id => document.getElementById(id);
-        const connectionDot = $('connectionDot');
-        const connectionStatus = $('connectionStatus');
-        const launchBtn = $('launchBtn');
-        const livePrompt = $('livePrompt');
-        const liveOutput = $('liveOutput');
-        const liveTitle = $('liveTitle');
-        const progressLabel = $('progressLabel');
-        const progressFill = $('progressFill');
-        const currentQuestion = $('currentQuestion');
-        const currentTtft = $('currentTtft');
-        const avgAntTtft = $('avgAntTtft');
-        const avgBaseTtft = $('avgBaseTtft');
-        const speedup = $('speedup');
-        const resultsPanel = $('resultsPanel');
-        const resultsBody = $('resultsBody');
-        const reportPath = $('reportPath');
-        const currentRam = $('currentRam');
-        const currentMps = $('currentMps');
+        const els = {
+            loadBtn: $('loadBtn'),
+            playBtn: $('playBtn'),
+            prevBtn: $('prevBtn'),
+            nextBtn: $('nextBtn'),
+            qCounter: $('qCounter'),
+            modelSelect: $('modelSelect'),
+            dbSelect: $('dbSelect'),
 
+            userInputTarget: $('userInputTarget'),
+            viewContextBtn: $('viewContextBtn'),
+            sysPromptModal: $('sysPromptModal'),
+            sysPromptContent: $('sysPromptContent'),
+
+            consoleBase: $('consoleBase'),
+            consoleAnt: $('consoleAnt'),
+
+            badgeBase: $('badgeBase'),
+            badgeAnt: $('badgeAnt'),
+
+            valBaseTTFT: $('valBaseTTFT'),
+            valAntTTFT: $('valAntTTFT'),
+            valSpeedup: $('valSpeedup'),
+
+            checkBase: $('checkBase'),
+            checkAnt: $('checkAnt')
+        };
+
+        // --- CHART SETUP ---
+        function initCharts() {
+            // BASELINE CHART
+            const ctxBase = document.getElementById('chartBase').getContext('2d');
+            const gradBase = ctxBase.createLinearGradient(0, 0, 0, 160);
+            gradBase.addColorStop(0, 'rgba(255, 51, 102, 0.4)');
+            gradBase.addColorStop(1, 'rgba(255, 51, 102, 0)');
+
+            chartBase = new Chart(ctxBase, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'GPU Load (%)',
+                            borderColor: '#ff3366',
+                            backgroundColor: gradBase,
+                            data: [],
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 0,
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: getChartOptions()
+            });
+
+            // ANTI CHART
+            const ctxAnt = document.getElementById('chartAnt').getContext('2d');
+            const gradAnt = ctxAnt.createLinearGradient(0, 0, 0, 160);
+            gradAnt.addColorStop(0, 'rgba(0, 242, 255, 0.4)');
+            gradAnt.addColorStop(1, 'rgba(0, 242, 255, 0)');
+
+            chartAnt = new Chart(ctxAnt, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'GPU Load (%)',
+                            borderColor: '#00f2ff',
+                            backgroundColor: gradAnt,
+                            data: [],
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 0,
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: getChartOptions()
+            });
+        }
+
+        function getChartOptions() {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        enabled: true,
+                        backgroundColor: 'rgba(20, 20, 35, 0.9)',
+                        titleColor: '#fff',
+                        bodyColor: '#ccc',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'category',
+                        display: false,
+                        grid: { display: false }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        max: 100, // Load is 0-100%
+                        position: 'left',
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: '#64748b' },
+                        border: { display: false }
+                    }
+                }
+            };
+        }
+
+        // --- LOGIC ---
         function connect() {
             ws = new WebSocket(WS_URL);
-            ws.onopen = () => {
-                connectionDot.classList.add('connected');
-                connectionStatus.textContent = 'Connected';
-            };
-            ws.onclose = () => {
-                connectionDot.classList.remove('connected');
-                connectionStatus.textContent = 'Disconnected';
-                setTimeout(connect, 2000);
-            };
-            ws.onmessage = (e) => handleMessage(JSON.parse(e.data));
+            ws.onopen = () => console.log("Connected");
+            ws.onmessage = (e) => handleMsg(JSON.parse(e.data));
+            ws.onclose = () => setTimeout(connect, 2000);
         }
 
-        function handleMessage(data) {
-            console.log('[Server]', data);
+        function handleMsg(msg) {
+            console.log("MSG:", msg.event);
 
-            switch (data.event) {
-                case 'questions_loaded':
-                    evalState.questions = data.questions;
-                    progressLabel.textContent = `Loaded ${data.questions.length} questions`;
-                    runNextQuestion();
-                    break;
-
-                case 'keystroke_ack':
-                    // Server acknowledged keystroke (KV cache updated)
-                    break;
-
-                case 'first_token':
-                    // MEASURE E2E TTFT HERE
-                    const ttft = Date.now() - evalState.submitTime;
-                    currentTtft.textContent = ttft + 'ms';
-                    evalState.results[evalState.mode].push({
-                        question_id: evalState.questions[evalState.currentIdx].question_id,
-                        ttft: ttft
-                    });
-                    updateAverages();
-                    break;
-
-                case 'token':
-                    liveOutput.textContent += data.text;
-                    break;
-
-                case 'generation_complete':
-                    // Capture memory metrics from server
-                    if (data.peak_ram_mb !== undefined) {
-                        currentRam.textContent = data.peak_ram_mb;
-                        currentMps.textContent = data.peak_mps_mb || 0;
-                        // Store in results
-                        const lastResult = evalState.results[evalState.mode];
-                        if (lastResult.length > 0) {
-                            lastResult[lastResult.length - 1].peak_ram_mb = data.peak_ram_mb;
-                            lastResult[lastResult.length - 1].peak_mps_mb = data.peak_mps_mb || 0;
-                        }
-                    }
-                    // Move to next question after short delay
-                    setTimeout(() => {
-                        evalState.currentIdx++;
-                        runNextQuestion();
-                    }, 300);
-                    break;
-
-                case 'report_saved':
-                    reportPath.textContent = data.path;
-                    break;
-
-                case 'cleanup_complete':
-                    // Memory cleaned up, now start baseline
-                    evalState.mode = 'baseline';
-                    evalState.currentIdx = 0;
-                    liveTitle.textContent = 'Baseline Mode (Cold Start)';
-                    progressLabel.textContent = 'Starting baseline evaluation...';
-                    runNextQuestion();
-                    break;
+            if (msg.event === 'ready') {
+                state.questions = new Array(msg.total).fill(0);
+                state.currentIdx = 0;
+                updateControls();
+                loadQuestion(0);
+                els.playBtn.disabled = false;
             }
-        }
 
-        function updateAverages() {
-            const ant = evalState.results.anticipatory;
-            const base = evalState.results.baseline;
+            else if (msg.event === 'question_ready') {
+                renderQuestion(msg.question);
+            }
 
-            if (ant.length > 0) {
-                const avg = ant.reduce((s, r) => s + r.ttft, 0) / ant.length;
-                avgAntTtft.textContent = Math.round(avg) + 'ms';
-            }
-            if (base.length > 0) {
-                const avg = base.reduce((s, r) => s + r.ttft, 0) / base.length;
-                avgBaseTtft.textContent = Math.round(avg) + 'ms';
-            }
-            if (ant.length > 0 && base.length > 0) {
-                const antAvg = ant.reduce((s, r) => s + r.ttft, 0) / ant.length;
-                const baseAvg = base.reduce((s, r) => s + r.ttft, 0) / base.length;
-                speedup.textContent = (baseAvg / antAvg).toFixed(1) + 'x';
-            }
-        }
-
-        async function runNextQuestion() {
-            // Check if we need to switch modes
-            if (evalState.currentIdx >= evalState.questions.length) {
-                if (evalState.mode === 'anticipatory') {
-                    // Switch to baseline - request cleanup first
-                    evalState.mode = 'switching';
-                    liveTitle.textContent = 'Cleaning up memory...';
-                    progressLabel.textContent = 'Preparing for baseline evaluation...';
-                    ws.send(JSON.stringify({ type: 'cleanup_for_baseline' }));
-                    return; // Wait for cleanup_complete event
+            else if (msg.event === 'server_log') {
+                const text = msg.text;
+                /*
+                if (text.includes("[Baseline]")) {
+                    appendLog('consoleBase', text);
+                } else if (text.includes("[APITS]")) {
+                    appendLog('consoleAnt', text);
                 } else {
-                    // Done!
-                    finishEval();
-                    return;
+                   appendLog('consoleBase', text);
                 }
+                */
             }
 
-            const q = evalState.questions[evalState.currentIdx];
-            const total = evalState.questions.length;
-            const pct = ((evalState.currentIdx + 1) / total) * 100;
-            progressFill.style.width = pct + '%';
-            currentQuestion.textContent = `${evalState.currentIdx + 1}/${total}`;
-            progressLabel.textContent = `[${evalState.mode}] ${q.question_id}`;
+            // BASELINE EVENTS
+            else if (msg.event === 'baseline_first_token') {
+                ensureOutputContainer('consoleBase', 'outBase');
+            }
+            else if (msg.event === 'baseline_token') {
+                ensureOutputContainer('consoleBase', 'outBase');
+                appendOutput('outBase', msg.text);
+            }
+            else if (msg.event === 'baseline_complete') {
+                els.badgeBase.className = "badge done";
+                els.badgeBase.innerText = "DONE";
 
-            livePrompt.textContent = '';
-            liveOutput.textContent = '';
+                // Show Correctness
+                showCorrectness(els.checkBase, msg.eval);
 
-            // Simulate typing the prompt character by character
-            const prompt = q.prompt;
-            const charDelay = 1000 / evalState.typingSpeed;
+                // Plot Data (Labels + Load Only)
+                const labels = msg.metrics.map(m => (m.relative_time_ms / 1000).toFixed(1));
+                const dataLoad = msg.metrics.map(m => m.gpu_load || 0);
 
-            for (let i = 0; i < prompt.length; i++) {
-                livePrompt.textContent = prompt.slice(0, i + 1) + '▌';
+                chartBase.data.labels = labels;
+                chartBase.data.datasets[0].data = dataLoad;
+                chartBase.update();
 
-                // Send keystroke to server (for KV cache building in anticipatory mode)
-                if (evalState.mode === 'anticipatory') {
-                    ws.send(JSON.stringify({
-                        type: 'keystroke',
-                        text: prompt.slice(0, i + 1),
-                        question_idx: evalState.currentIdx
-                    }));
+                state.baselineMetrics = msg.metrics;
+                startApitsPhase();
+            }
+
+            // APITS EVENTS
+            else if (msg.event === 'apits_ready') {
+                startTyping(msg.user_text);
+            }
+            else if (msg.event === 'apits_first_token') {
+                ensureOutputContainer('consoleAnt', 'outAnt');
+            }
+            else if (msg.event === 'apits_token') {
+                ensureOutputContainer('consoleAnt', 'outAnt');
+                appendOutput('outAnt', msg.text);
+            }
+            else if (msg.event === 'apits_complete') {
+                els.badgeAnt.className = "badge done";
+                els.badgeAnt.innerText = "DONE";
+                state.isRunning = false;
+                els.playBtn.disabled = false;
+
+                showCorrectness(els.checkAnt, msg.eval);
+
+                // Plot Data (Labels + Load Only)
+                const labels = msg.metrics.map(m => (m.relative_time_ms / 1000).toFixed(1));
+                const dataLoad = msg.metrics.map(m => m.gpu_load || 0);
+
+                chartAnt.data.labels = labels;
+                chartAnt.data.datasets[0].data = dataLoad;
+                chartAnt.update();
+
+                state.apitsMetrics = msg.metrics;
+                // updateSummaryStats(msg.metrics); // Disabled
+            }
+        }
+
+        function updateSummaryStats(metrics) {
+            const baseTTFT = parseFloat(els.valBaseTTFT.innerText);
+            const antTTFT = parseFloat(els.valAntTTFT.innerText);
+            let reduction = 0;
+            if (!isNaN(baseTTFT) && !isNaN(antTTFT) && baseTTFT > 0) {
+                reduction = ((baseTTFT - antTTFT) / baseTTFT) * 100;
+            }
+            // Use metrics from APITS or average of both? Usually just current run (APITS)
+            const avgLoad = metrics.reduce((acc, m) => acc + (m.gpu_load || 0), 0) / metrics.length;
+            const peakVram = Math.max(...metrics.map(m => m.gpu_mb));
+
+            $('resReduction').innerText = `${Math.round(reduction)}% Faster`;
+            $('resAvgLoad').innerText = `${Math.round(avgLoad)}%`;
+            $('resPeakVram').innerText = `${Math.round(peakVram)} MB`;
+        }
+
+        let currentPromptText = "";
+
+        function renderQuestion(q) {
+            // Reset Summary
+            // $('resultOverlay').classList.add('hidden'); // This element is removed
+
+            // Populate System Prompt Modal
+            els.sysPromptContent.innerText = q.system_part;
+
+            // Clear Central Input
+            els.userInputTarget.innerText = "";
+            els.userInputTarget.className = "";
+
+            // Reset Consoles (Output Only)
+            els.consoleBase.innerHTML = "";
+            els.consoleAnt.innerHTML = "";
+
+            currentPromptText = q.prompt;
+
+            // Clear Charts
+            chartBase.data.datasets[0].data = [];
+            chartBase.data.datasets[1].data = [];
+            chartBase.update();
+            chartAnt.data.datasets[0].data = [];
+            chartAnt.data.datasets[1].data = [];
+            chartAnt.update();
+
+            // Reset Badges
+            els.badgeBase.className = "badge waiting"; els.badgeBase.innerText = "WAITING";
+            els.badgeAnt.className = "badge waiting"; els.badgeAnt.innerText = "WAITING";
+
+            // Reset metrics
+            els.valBaseTTFT.innerText = "-";
+            els.valAntTTFT.innerText = "-";
+            els.valSpeedup.innerText = "";
+            els.checkBase.classList.add('hidden');
+            els.checkAnt.classList.add('hidden');
+
+            // Stats
+            // $('resReduction').innerText = "0%";
+            // $('resAvgLoad').innerText = "0%";
+            // $('resPeakVram').innerText = "0 MB";
+        }
+
+        function loadQuestion(idx) {
+            ws.send(JSON.stringify({ type: 'prepare_query', index: idx }));
+            state.currentIdx = idx;
+            els.qCounter.innerText = `Question ${idx + 1}/${state.questions.length}`;
+            updateControls();
+        }
+
+        function updateControls() {
+            els.prevBtn.disabled = state.currentIdx <= 0;
+            els.nextBtn.disabled = state.currentIdx >= state.questions.length - 1;
+        }
+
+        // --- PLAY FLOW ---
+
+        async function runDemo() {
+            if (state.isRunning) return;
+            state.isRunning = true;
+            els.playBtn.disabled = true;
+
+            // Phase 1: Baseline
+            els.badgeBase.className = "badge running";
+            els.badgeBase.innerText = "RUNNING";
+
+            // Start Timer
+            const t0 = performance.now();
+
+            ws.send(JSON.stringify({ type: 'run_baseline', index: state.currentIdx }));
+
+            // Wait for completion (handled in onMessage)
+            // But we need to track TTFT locally for now since server events are async
+            // We'll set a one-time listener for first token
+            const ftListener = (e) => {
+                const d = JSON.parse(e.data);
+                if (d.event === 'baseline_first_token') {
+                    const ttft = performance.now() - t0;
+                    els.valBaseTTFT.innerText = Math.round(ttft) + " ms";
+                    ws.removeEventListener('message', ftListener);
                 }
-
-                await sleep(charDelay);
-            }
-
-            livePrompt.textContent = prompt;
-
-            // Submit - START E2E TIMER
-            evalState.submitTime = Date.now();
-            ws.send(JSON.stringify({
-                type: 'submit',
-                mode: evalState.mode,
-                question_idx: evalState.currentIdx
-            }));
-        }
-
-        function finishEval() {
-            launchBtn.disabled = false;
-            launchBtn.textContent = 'Launch E2E Evaluation';
-            progressLabel.textContent = 'Evaluation complete!';
-            liveTitle.textContent = '✅ Complete';
-
-            // Show results table
-            resultsPanel.classList.remove('hidden');
-            resultsBody.innerHTML = '';
-
-            const ant = evalState.results.anticipatory;
-            const base = evalState.results.baseline;
-
-            for (let i = 0; i < ant.length; i++) {
-                const a = ant[i];
-                const b = base[i] || { ttft: 0 };
-                const spd = b.ttft / a.ttft;
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${a.question_id}</td>
-                    <td>${a.ttft} ms</td>
-                    <td>${b.ttft} ms</td>
-                    <td class="improvement">${spd.toFixed(1)}x</td>
-                `;
-                resultsBody.appendChild(row);
-            }
-
-            // Request report generation
-            ws.send(JSON.stringify({
-                type: 'generate_report',
-                results: evalState.results
-            }));
-        }
-
-        function sleep(ms) {
-            return new Promise(r => setTimeout(r, ms));
-        }
-
-        launchBtn.addEventListener('click', () => {
-            if (!ws || ws.readyState !== WebSocket.OPEN) {
-                alert('Not connected');
-                return;
-            }
-
-            // Reset state
-            evalState = {
-                running: true,
-                mode: 'anticipatory',
-                questions: [],
-                currentIdx: 0,
-                typingSpeed: parseInt($('speedInput').value),
-                submitTime: null,
-                results: { anticipatory: [], baseline: [] }
             };
+            ws.addEventListener('message', ftListener);
+        }
 
-            launchBtn.disabled = true;
-            launchBtn.textContent = 'Running...';
-            resultsPanel.classList.add('hidden');
-            liveTitle.textContent = 'Anticipatory Mode (KV Cache)';
-            avgAntTtft.textContent = '-';
-            avgBaseTtft.textContent = '-';
-            speedup.textContent = '-';
+        function startApitsPhase() {
+            els.badgeAnt.className = "badge running";
+            els.badgeAnt.innerText = "RUNNING";
 
-            // Request questions from server
+            ws.send(JSON.stringify({ type: 'run_anticipatory', index: state.currentIdx }));
+            // Server will reply 'apits_ready' then we start typing
+        }
+
+        async function startTyping(text) {
+            const target = els.userInputTarget;
+            target.innerHTML = "";
+            target.className = "user-input";
+
+            let cursor = document.createElement('span');
+            cursor.style.display = 'inline-block';
+            cursor.style.width = '10px';
+            cursor.style.height = '1.2em';
+            cursor.style.background = '#00f2ff';
+            cursor.style.verticalAlign = 'middle';
+            cursor.className = 'blink';
+            cursor.style.animation = 'blink 1s infinite';
+
+            target.appendChild(cursor);
+
+            const delay = 1000 / state.typingSpeed;
+
+            for (let i = 0; i < text.length; i++) {
+                if (!state.isRunning) break;
+                const char = text[i];
+                target.insertBefore(document.createTextNode(char), cursor);
+                ws.send(JSON.stringify({
+                    type: 'keystroke',
+                    text: text.slice(0, i + 1)
+                }));
+                await new Promise(r => setTimeout(r, delay));
+            }
+
+            // Submit
+            target.removeChild(cursor);
+            els.badgeAnt.innerText = "GENERATING...";
+
+            const t0 = performance.now();
+            ws.send(JSON.stringify({ type: 'submit_apits', index: state.currentIdx }));
+
+            const ftListener = (e) => {
+                const d = JSON.parse(e.data);
+                if (d.event === 'apits_first_token') {
+                    const ttft = performance.now() - t0;
+                    els.valAntTTFT.innerText = Math.round(ttft) + " ms";
+
+                    // Calc Speedup
+                    const baseV = parseInt(els.valBaseTTFT.innerText);
+                    if (baseV) {
+                        const s = (baseV / ttft).toFixed(1);
+                        els.valSpeedup.innerText = `${s}x Faster`;
+                    }
+
+                    ws.removeEventListener('message', ftListener);
+                }
+            };
+            ws.addEventListener('message', ftListener);
+        }
+
+        function ensureOutputContainer(consoleId, outId) {
+            if (!document.getElementById(outId)) {
+                const container = document.getElementById(consoleId);
+                const div = document.createElement('div');
+                div.id = outId;
+                div.className = 'output-block code-block';
+                div.style.marginTop = '1rem';
+                container.appendChild(div);
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+
+        function appendOutput(outId, text) {
+            const el = document.getElementById(outId);
+            if (el) {
+                el.textContent += text;
+                el.parentElement.scrollTop = el.parentElement.scrollHeight;
+            }
+        }
+
+        function appendLog(containerId, text) {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = 'log-msg';
+            div.innerText = text.trim();
+            div.style.color = '#6b7280';
+            div.style.fontSize = '0.8rem';
+            div.style.fontFamily = 'JetBrains Mono';
+            div.style.marginBottom = '2px';
+            div.style.borderLeft = '2px solid #333';
+            div.style.paddingLeft = '8px';
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function showCorrectness(el, evalData) {
+            el.classList.remove('hidden');
+            if (evalData.valid && evalData.match) {
+                el.className = "correctness-indicator valid";
+                el.innerText = `✅ Correct (${evalData.gold_rows} rows)`;
+            } else {
+                el.className = "correctness-indicator invalid";
+                const err = evalData.error || "Result Mismatch";
+                el.innerText = `❌ ${err}`;
+            }
+        }
+
+        // --- EVENTS ---
+
+        els.loadBtn.onclick = () => {
+            els.loadBtn.disabled = true;
+            els.loadBtn.innerText = "Loading Model...";
+
             ws.send(JSON.stringify({
-                type: 'load_questions',
-                model: $('modelSelect').value,
-                db: $('dbSelect').value,
-                limit: parseInt($('limitInput').value)
+                type: 'init',
+                model: els.modelSelect.value,
+                db: els.dbSelect.value,
+                limit: 10
             }));
-        });
 
+            // Re-enable handled in 'ready' event
+            // Note: If init fails, we might get stuck. Use timeout backup?
+            setTimeout(() => {
+                if (els.loadBtn.disabled && els.loadBtn.innerText.includes("Loading")) {
+                    els.loadBtn.disabled = false;
+                    els.loadBtn.innerText = "Load";
+                }
+            }, 30000);
+        };
+
+        // Update handling of 'ready' event
+        const _origHandleMsg = handleMsg;
+        handleMsg = function (msg) {
+            if (msg.event === 'ready') {
+                els.loadBtn.disabled = false;
+                els.loadBtn.innerText = "Load";
+            }
+            _origHandleMsg(msg);
+        }
+
+        els.playBtn.onclick = runDemo;
+
+        els.nextBtn.onclick = () => loadQuestion(state.currentIdx + 1);
+        els.prevBtn.onclick = () => loadQuestion(state.currentIdx - 1);
+
+        els.viewContextBtn.onclick = () => {
+            els.sysPromptModal.classList.remove('hidden');
+        };
+
+        // Init
+        initCharts();
         connect();
+
     </script>
 </body>
 

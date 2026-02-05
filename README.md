@@ -1,108 +1,107 @@
-# Anticipatory Prefill with Keystroke Streaming
+# OT1-APITS: Anticipatory Prefill with Keystroke Streaming
 
-**Goal**: Reduce Time-To-First-Token (TTFT) in interactive Text-to-SQL by overlapping prefill compute with user typing time, maintaining a single evolving KV-cache.
+> **Project Goal**: Dramatically reduce **Time-To-First-Token (TTFT)** in interactive Text-to-SQL tasks.
+> This is achieved by overlapping the prefill compute phase with user typing time, maintaining a single evolving KV-cache for high-performance inference.
 
-## Quickstart
+---
 
-### Prerequisites
+## 🚀 Overview
 
-- **Python 3.10+**
-- **Docker Desktop** installed and running
-- **Node.js 20+** (for frontend)
+OT1-APITS is a high-performance research prototype designed to optimize LLM responsiveness in streaming scenarios. By pre-calculating the KV-cache as the user types, we try to eliminate the traditional "wait-then-generate" bottleneck.
 
-### Running the Application
+### Key Features
+
+- **Keystroke Streaming**: Real-time synchronization between typing and server-side prefill.
+- **Anticipatory Prefill**: Leverages the "idle" time during user input to prepare the model state.
+- **Optimized KV-Cache**: Efficient management of model memory to ensure instant generation upon submission.
+- **Dual Flow Architecture**: Dedicated environments for both real-time interaction and automated evaluation.
+
+---
+
+## 🛠️ Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Python**: 3.10+
+- **Node.js**: 20+ (for the UI)
+- **Docker & Docker Compose**: For database orchestration
+
+---
+
+## 🏗️ Quick Start
+
+The project uses a `Makefile` to simplify orchestration across the backend, database, and frontend.
+
+### 1. Launch the Application
+
+To set up the environment, seed the database, and start both the server and UI:
 
 ```bash
-# Setup environment and run the full application
 make run-app
 ```
 
-This will:
+**Access points:**
 
-1. Create a Python virtual environment (`.venv`)
-2. Install backend dependencies
-3. Start PostgreSQL database (Docker)
-4. Seed the database with sample data
-5. Start the backend WebSocket server
-6. Start the frontend development server
+- **Frontend**: [http://localhost:5173](http://localhost:5173)
+- **WebSocket API**: `ws://localhost:8000/ws/session`
+- **API Health**: [http://localhost:8000/health](http://localhost:8000/health)
 
-The application will be available at:
+### 2. Run Evaluations
 
-- **Frontend**: <http://localhost:5173>
-- **Backend WebSocket**: ws://localhost:8000/ws/session
-
-Press `Ctrl+C` to stop all processes.
-
-### Running Evaluations
+To execute the performance measurement pipeline:
 
 ```bash
-# Run the evaluation pipeline
 make eval
 ```
 
-This will:
+*Reports will be generated in `eval/data/reports/`.*
 
-1. Setup the evaluation environment
-2. Start the evaluation PostgreSQL database
-3. Seed it with test data
-4. Run evaluation scripts
-5. Generate reports in `eval/reports/`
+---
 
-## Database Setup
-
-## Available Commands
+## 📂 Project Structure
 
 ```bash
-make help          # Show all available commands
-make run-app       # Run the full application (backend + frontend + DB)
-make eval          # Run evaluation pipeline
-make rebuild       # Clean and rebuild everything
-make clean         # Stop all containers and remove virtual environment
+.
+├── src/                  # Core Engine
+│   ├── stream_controller.py  # KV-cache management & logic
+│   ├── websocket_server.py   # FastAPI WebSocket implementation
+│   └── utils.py              # Model loading & helper functions
+├── ui/                   # React/Vite Frontend
+├── eval/                 # Evaluation Suite
+│   ├── eval.py               # Main evaluation script
+│   └── seed_eval_db.py       # Evaluation-specific data seeding
+├── scripts/              # Utility scripts (seeding, etc.)
+├── Makefile              # Central orchestration
+└── docker-compose.*.yml  # Database services configuration
 ```
 
-## Architecture
+---
 
-### Application Environment
+## ⚙️ Advanced Commands
 
-- **Database**: `ot1_apits` (PostgreSQL on port 5432)
-- **Backend**: WebSocket server (`run_server.py` on port 8000)
-- **Frontend**: React UI (Vite dev server on port 5173)
+| Command | Action |
+| :--- | :--- |
+| `make help` | Show all available commands |
+| `make rebuild` | Wipe environment and perform a fresh build |
+| `make clean` | Stop docker containers and remove virtual env |
+| `make setup-db-app` | Reset and re-seed the application database |
 
-### Evaluation Environment
+---
 
-- **Database**: `ot1_apits_eval` (PostgreSQL on port 5433)
-- **Scripts**: CLI evaluation tools in `eval/`
-- **Reports**: Generated in `eval/data/reports/`
+## 🧪 Architecture Notes
 
-## Repo Layout
+- **Model**: Powered by `Qwen/Qwen2.5-Coder-1.5B-Instruct`.
+- **Backend**: FastAPI with Uvicorn, utilizing asynchronous WebSocket handling.
+- **Frontend**: React (Vite) with real-time keystroke tracking and performance metrics display.
+- **Database**: PostgreSQL (Docker-isolated) for both app and evaluation contexts.
 
-```
-repo/
-├── src/
-│   ├── config.py            # Global constants (Model name, quantization, etc.)
-│   ├── stream_controller.py # KV-cache management and event handling
-│   ├── websocket_server.py  # WebSocket API server
-│   └── __init__.py
-├── ui/                       # React frontend (keystroke streaming UI)
-├── docs/
-│   ├── colab.md             # Browser instructions
-│   └── vscode_colab.md      # VS Code instructions
-├── requirements.txt          # Pinned dependencies
-├── .gitignore
-├── Makefile
-├── eval/
-│   ├── eval.py              # Evaluation script
-│   ├── seed_eval_db.py      # Evaluation database seeder
-│   ├── README.md            # Evaluation README
-│   └── data/
-│       ├── *.json           # Database and evaluation data
-│       └── reports/         # Evaluation reports
-├── docker-compose.app.yml    # Application database setup
-├── docker-compose.eval.yml   # Evaluation database setup
-└── README.md
-```
+---
 
-## Team Workflow
+## 👨‍💻 Workflow Guidelines
 
-- **Do not edit** `00_onboarding.ipynb` unless fixing a setup bug.
-- Create your own directory for feature work.
+- **Environment**: Always use the virtual environment created in `.venv`.
+- **Database**: Ensure Docker is running before executing any `make` targets.
+- **Modifications**: If you update the model configuration, check `src/websocket_server.py` and `src/config.py`.
+
+---
+*Created by the OT1-APITS Research Team.*
